@@ -18,27 +18,16 @@ function tick(count, log) {
         gpu.tick(dt);
         spu.tick(dt);
         totalTicks++;
-        dbg.record();
+        //dbg.record();
         if (cpu.pc === 0x00FE)
             throw 'BOOT COMPLETED.';
-        gpu.display.blit();
+
     }
+    gpu.display.blit();
     setTimeout(function() { tick(60000); }, 1);
 }
 
-tick(600000, 0);
-
-
-/*
-function loop() {
-    while (true) {
-        tick(1);
-
-            gpu.display.blit();
-            break;
-        }
-    }
-} */
+tick(60000, 0);
 
 
 
