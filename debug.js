@@ -3,7 +3,6 @@ var Debugger = function(cpu, mmu) {
     this.cpu = cpu;
     this.mmu = mmu;
     this.history = [];
-    console.log('GameBoy (LR35902) console debugger.');
 };
 
 Debugger.prototype.bitString = function(data, length) {
@@ -21,9 +20,10 @@ Debugger.prototype.hexString = function(data, size) {
 };
 
 Debugger.prototype.regs = function(verbose) {
+    var result;
 
     if (!verbose) {
-        var result = '';
+        result = '';
         result += 'PC=' + this.hexString(this.cpu.pc) + ', ';
         result += 'SP=' + this.hexString(this.cpu.sp) + ' | ';
         result += 'AF=' + this.hexString(this.cpu.af) + ', ';
@@ -34,11 +34,10 @@ Debugger.prototype.regs = function(verbose) {
         result += this.cpu.f.n() ? 'N' : '-';
         result += this.cpu.f.h() ? 'H' : '-';
         result += this.cpu.f.c() ? 'C' : '-';
-        console.log(result);
-        return;
+        return result;
     }
 
-    var result = '';
+    result = '';
     result += '_______________________________________________________________________________\n';
     result += '| PC: ' + this.hexString(this.cpu.pc) + ' (' + this.bitString(this.cpu.pc) + ')' +
         '\tSP: ' + this.hexString(this.cpu.sp) + ' (' + this.bitString(this.cpu.sp) + ')                 |\n';
@@ -48,7 +47,7 @@ Debugger.prototype.regs = function(verbose) {
         '\tHL: ' + this.hexString(this.cpu.hl) + ' (' + this.bitString(this.cpu.hl) + ')' +
         '\t Flags: ' + this.bitString(this.cpu.af).substr(8, 4) + '  |\n';
     result += '|_____________________________________________________________________________|';
-    console.log(result);
+	return result;
 };
 
 Debugger.prototype.deasm = function(address) {
@@ -80,8 +79,10 @@ Debugger.prototype.deasm = function(address) {
     comment = comment.replace('a8', '0x' + this.mmu.read(address + 1).toString(16).toUpperCase());
     comment = comment.replace('d16', '0x' + this.mmu.readWord(address + 1).toString(16).toUpperCase());
     comment = comment.replace('a16', '0x' + this.mmu.readWord(address + 1).toString(16).toUpperCase());
-    comment = comment.replace(',A', ',A=0x' + this.cpu.a().toString(16).toUpperCase());
-    console.log(result + inst + comment);
+    comment = comment.replace('A', 'A=0x' + this.cpu.a().toString(16).toUpperCase());
+		result = result + inst + comment;
+		result += pad.substr(0, 70 - result.length) + ' STATE: ';
+		return result + this.regs();
 };
 
 Debugger.prototype.trace = function(count) {
@@ -105,7 +106,7 @@ Debugger.prototype.restart = function() {
 Debugger.prototype.dump = function(address, length) {
     address = address || 0x0;
     length = length || 5;
-    result = '';
+    var result = '';
     for (var a = address; a < address + length; a++) {
         var data = this.mmu.read(a);
         result += this.hexString(a) + ': ';
