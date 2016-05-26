@@ -59,6 +59,10 @@ CPU.prototype.step = function(dt) {
 	this.expectedCycles += self.frequency * dt;
 	if (this.cycles > this.expectedCycles) // Moving to fast?
 		return;
+
+	if (this.pc >= 0xDFFF)
+		throw 'cpu.pc is drifting';
+
 	var op = this.mmu.read(this.pc);
 	if (op === 0xCB) {
 		op = 0xCB00 | this.mmu.read(this.pc + 1);
@@ -151,6 +155,7 @@ CPU.prototype.step = function(dt) {
 		// 16-bit arithmetic.
 		case 0x0B: this.bc = (this.bc - 1) & 0xFFFF; break; // DEC BC
 		case 0x1B: this.de = (this.de - 1) & 0xFFFF; break; // DEC DE
+		case 0x3B: this.sp = (this.sp - 1) & 0xFFFF; break; // DEC SP
 
 		case 0x03: this.bc = (this.bc + 1) & 0xFFFF; break; // INC BC
 		case 0x13: this.de = (this.de + 1) & 0xFFFF; break; // INC DE
@@ -205,8 +210,9 @@ CPU.prototype.startRom = function() {
 	this.de = 0xD8;
 	this.hl = 0x14D;
 	this.sp = 0xFFFE;
-	this.pc = 0x0;
-	this.mmu.booting = true;
+
+	this.pc = 0x100;
+	this.mmu.booting = false;
 };
 
 CPU.prototype.opCodeSizes = [

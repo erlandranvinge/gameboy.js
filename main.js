@@ -7,16 +7,25 @@ mmu.setCartridge('roms/tetris.gb');
 
 cpu.startRom();
 var ticks = 0;
+dbg.attach();
 function tick(count) {
 	for (var c = 0; c < count; c++) {
-		var dt = 0.0001;
-		cpu.step(dt);
-		gpu.tick(dt);
-		spu.tick(dt);
-		dbg.tick();
+		var dt = 0.000001;
+		try {
+			cpu.step(dt);
+			gpu.tick(dt);
+			spu.tick(dt);
+			dbg.tick();
+		} catch (e) {
+			dbg.detach();
+			return;
+		}
+
 		ticks++;
-		if (cpu.pc === 0x00FE)
+		if (cpu.pc === 0x00FE) {
+			console.log(mmu.booting);
 			throw 'BOOT COMPLETED.';
+		}
 	}
 	gpu.display.blit();
 	setTimeout(tick, 5, 1000);

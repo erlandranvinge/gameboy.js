@@ -34,7 +34,7 @@ MMU.prototype.write = function(address, data) {
 		address -= 0x2000; // Memory repeat
 
 	if (address < 0x8000) {
-		console.log('Warning: Invalid read-only memory write @ 0x' + address.toString(16).toUpperCase());
+		throw 'Invalid read-only memory write @ 0x' + address.toString(16).toUpperCase();
 		return;
 	}
 

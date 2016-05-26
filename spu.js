@@ -26,7 +26,7 @@ SPU.prototype.tick = function(dt) {
 SPU.prototype.read = function(address) {
 	switch(address) {
 		default:
-			throw 'Error: Unknown SPU read from 0x' + address.toString(16).toUpperCase();
+			throw 'Unknown SPU read from 0x' + address.toString(16).toUpperCase();
 	}
 };
 
