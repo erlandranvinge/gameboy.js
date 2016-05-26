@@ -6,8 +6,6 @@ var dbg = new Debugger(cpu, mmu);
 mmu.setCartridge('roms/tetris.gb');
 
 cpu.startRom();
-dbg.attach();
-
 var ticks = 0;
 function tick(count) {
 	for (var c = 0; c < count; c++) {
@@ -19,13 +17,9 @@ function tick(count) {
 		ticks++;
 		if (cpu.pc === 0x00FE)
 			throw 'BOOT COMPLETED.';
-
-		if (ticks % 100 == 0) {
-			gpu.display.blit();
-		}
 	}
+	gpu.display.blit();
 	setTimeout(tick, 5, 1000);
-	//console.log(dbg.deasm());
 }
 tick(1000);
 

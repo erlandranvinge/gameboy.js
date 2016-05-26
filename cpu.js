@@ -59,7 +59,6 @@ CPU.prototype.step = function(dt) {
 	this.expectedCycles += self.frequency * dt;
 	if (this.cycles > this.expectedCycles) // Moving to fast?
 		return;
-
 	var op = this.mmu.read(this.pc);
 	if (op === 0xCB) {
 		op = 0xCB00 | this.mmu.read(this.pc + 1);
@@ -166,7 +165,7 @@ CPU.prototype.step = function(dt) {
 		case 0xE9: this.pc = this.hl; break; // JP (HL)
 		case 0x20: if (!this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR NZ,r8
 		case 0x30: if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
-		
+
 		case 0x28: if (this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR Z,r8
 		case 0xC3: this.pc = mmu.readWord(this.pc + 1); return; // JMP a16
 
@@ -206,8 +205,8 @@ CPU.prototype.startRom = function() {
 	this.de = 0xD8;
 	this.hl = 0x14D;
 	this.sp = 0xFFFE;
-	this.pc = 0x100;
-	this.mmu.booting = false;
+	this.pc = 0x0;
+	this.mmu.booting = true;
 };
 
 CPU.prototype.opCodeSizes = [
