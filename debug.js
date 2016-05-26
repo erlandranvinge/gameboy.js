@@ -104,7 +104,6 @@ Debugger.prototype.attach = function() {
 	this.history = [];
 	this.lastOp = cpu.pc;
 	this.attached = true;
-	console.log('Attached debugger');
 };
 
 Debugger.prototype.tick = function() {
@@ -115,7 +114,6 @@ Debugger.prototype.tick = function() {
 };
 
 Debugger.prototype.detach = function() {
-	console.log('Detached debugger');
 	this.attached = false;
 	var start = Math.max(0, this.history.length - 10);
 	for (var i = start; i < this.history.length; i++) {

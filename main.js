@@ -6,6 +6,7 @@ var dbg = new Debugger(cpu, mmu);
 mmu.setCartridge('roms/tetris.gb');
 
 cpu.startRom();
+dbg.attach();
 
 var ticks = 0;
 function tick(count) {
