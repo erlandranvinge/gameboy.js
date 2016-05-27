@@ -211,6 +211,8 @@ CPU.prototype.step = function(dt) {
 		case 0xC9: this.pc = mmu.readWord(this.sp); this.sp += 2; return; // RET
 		case 0xC5: mmu.writeWord(this.sp -= 2, this.bc); break; // PUSH BC
 		case 0xD5: mmu.writeWord(this.sp -= 2, this.de); break; // PUSH DE
+		case 0xE5: mmu.writeWord(this.sp -= 2, this.hl); break; // PUSH HL
+		case 0xF5: mmu.writeWord(this.sp -= 2, this.af); break; // PUSH AF
 
 		case 0xC1: this.bc = mmu.readWord(this.sp); this.sp += 2; break; // POP BC
 		case 0xE1: this.hl = mmu.readWord(this.sp); this.sp += 2; break; // POP HL

@@ -69,7 +69,7 @@ MMU.prototype.setCartridge = function(url) {
 	req.overrideMimeType('text/plain; charset=x-user-defined');
 	req.send(null);
 	if (req.status != 200)
-		throw 'Error: Can\'t load ROM file.';
+		throw 'Error: Can\'t load ROM file: ' + url + '.';
 
 	var rom = req.responseText;
 	for (var address = 0; address < rom.length; address++) {
