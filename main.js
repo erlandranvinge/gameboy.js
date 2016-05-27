@@ -5,7 +5,7 @@ var cpu = new CPU(mmu);
 var dbg = new Debugger(cpu, mmu);
 gpu.cpu = cpu; // for now.
 
-mmu.setCartridge('roms/alleyway.gb');
+mmu.setCartridge('roms/golf.gb');
 cpu.startRom();
 dbg.attach();
 
@@ -25,8 +25,8 @@ function tick(count) {
 			spu.tick(dt);
 			dbg.tick();
 		} catch (e) {
-			console.log('HALT! ' + dbg.regs());
 			console.log(e);
+			console.log('HALT! ' + dbg.regs());
 			dbg.detach();
 			return;
 		}
