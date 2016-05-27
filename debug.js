@@ -28,11 +28,11 @@ Debugger.prototype.regs = function(verbose) {
 	if (!verbose) {
 		result = '';
 		result += 'PC=' + this.hexString(this.cpu.pc) + ', ';
-		result += 'SP=' + this.hexString(this.cpu.sp) + ' | ';
+		result += 'SP=' + this.hexString(this.cpu.sp) + ', ';
 		result += 'AF=' + this.hexString(this.cpu.af) + ', ';
 		result += 'BC=' + this.hexString(this.cpu.bc) + ', ';
 		result += 'DE=' + this.hexString(this.cpu.de) + ', ';
-		result += 'HL=' + this.hexString(this.cpu.hl) + ' | F=';
+		result += 'HL=' + this.hexString(this.cpu.hl) + ', F=';
 		result += this.cpu.f.z() ? 'Z' : '-';
 		result += this.cpu.f.n() ? 'N' : '-';
 		result += this.cpu.f.h() ? 'H' : '-';
@@ -73,18 +73,10 @@ Debugger.prototype.deasm = function(address) {
 	if (opCode !== 0xCB) {
 		inst += Debugger.opCodeNames[opCode];
 	} else {
-		inst += 'PREFIX CB ' + Debugger.cbOpCodeNames[this.mmu.read(address + 1)];
+		inst += 'CB ' + Debugger.cbOpCodeNames[this.mmu.read(address + 1)];
 	}
-
-	var comment = pad.substr(0, 20 - inst.length) + '; ' + inst;
-	comment = comment.replace('d8', '0x' + this.mmu.read(address + 1).toString(16).toUpperCase());
-	comment = comment.replace('r8', '0x' + this.mmu.read(address + 1).toString(16).toUpperCase());
-	comment = comment.replace('a8', '0x' + this.mmu.read(address + 1).toString(16).toUpperCase());
-	comment = comment.replace('d16', '0x' + this.mmu.readWord(address + 1).toString(16).toUpperCase());
-	comment = comment.replace('a16', '0x' + this.mmu.readWord(address + 1).toString(16).toUpperCase());
-	comment = comment.replace('A', 'A=0x' + this.cpu.a().toString(16).toUpperCase());
-	result = result + inst + comment;
-	result += pad.substr(0, 70 - result.length) + ' STATE: ';
+	result = result + inst;
+	result += pad.substr(0, 60 - result.length);
 	return result + this.regs();
 };
 
@@ -101,6 +93,7 @@ Debugger.prototype.dump = function(address, length) {
 };
 
 Debugger.prototype.attach = function() {
+	console.info('Debugger attached.');
 	this.history = [];
 	this.lastOp = cpu.pc;
 	this.attached = true;
@@ -108,17 +101,18 @@ Debugger.prototype.attach = function() {
 
 Debugger.prototype.tick = function() {
 	if (this.attached && cpu.pc != this.lastOp) {
-		this.history.push(cpu.pc);
+		this.history.push(dbg.deasm());
 		this.lastOp = cpu.pc;
 	}
 };
 
 Debugger.prototype.detach = function() {
+	console.info('Debugger detached.');
 	this.attached = false;
 	var start = Math.max(0, this.history.length - 10);
 	for (var i = start; i < this.history.length; i++) {
-		var address = this.history[i];
-		console.log(dbg.deasm(address));
+		var line = this.history[i];
+		console.log(line);
 	}
 };
 

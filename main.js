@@ -3,12 +3,20 @@ var spu = new SPU();
 var mmu = new MMU(gpu, spu);
 var cpu = new CPU(mmu);
 var dbg = new Debugger(cpu, mmu);
-mmu.setCartridge('roms/tetris.gb');
+gpu.cpu = cpu; // for now.
 
+mmu.setCartridge('roms/alleyway.gb');
 cpu.startRom();
-var ticks = 0;
 dbg.attach();
+
+var ticks = 0;
+var kill = false;
 function tick(count) {
+	if (kill) {
+		console.info('Terminated!');
+		return;
+	}
+
 	for (var c = 0; c < count; c++) {
 		var dt = 0.000001;
 		try {
@@ -17,6 +25,8 @@ function tick(count) {
 			spu.tick(dt);
 			dbg.tick();
 		} catch (e) {
+			console.log('HALT! ' + dbg.regs());
+			console.log(e);
 			dbg.detach();
 			return;
 		}
@@ -34,6 +44,7 @@ tick(1000);
 
 document.addEventListener('keydown', function(e) {
 	switch(e.keyCode) {
+		case 27: kill = true; break;
 		case 32:
 			if (dbg.attached) {
 				dbg.detach();

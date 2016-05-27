@@ -1,8 +1,10 @@
 
 var GPU = function() {
-	this.frequency = 4194304; // ~4.194 MHz
+	this.cpu = null;
+	this.frequency = 4194304; // ~4.194 MHz (vblank @ 59.7 Hz => every 70.251:th cycle )
 	this.cycle = 0;
 	this.expectedCycle = 0;
+	this.control = 0x0;
 	this.ly = 0x1;
 	this.scx = 0x0;
 	this.scy = 0x0;
@@ -18,11 +20,23 @@ GPU.prototype.tick = function(dt) {
 	this.expectedCycle += this.frequency * dt;
 	if (this.cycle > this.expectedCycle)
 		return;
-	if (++this.ly > 153) this.ly = 0;
+	if (++this.ly > 153) {
+		this.ly = 0;
+	}
+
+	if (this.cycle % 70251 === 0) {
+		cpu.interrupt(0x0040);
+	}
 };
 
 GPU.prototype.read = function(address) {
+	if (address >= 0x8000 && address < 0xA000) {
+		// TODO: Tile stuff.
+		return this.vram[address];
+	}
+
 	switch(address) {
+		case 0xFF40: return this.control; // LCD Control.
 		case 0xFF42: return this.scy; // Scroll Y.
 		case 0xFF44: return this.ly;  // LCD Y Coordinate.
 		default:
@@ -41,12 +55,11 @@ GPU.prototype.write = function(address, data) {
 	}
 
 	switch(address) {
-		case 0xFF40: // LCD Control.
-			if (this.log) console.log('LCD Control: 0x' + data.toString(16).toUpperCase());
-			break;
+		case 0xFF40: this.control = data; break; // LCD Control.
 		case 0xFF41: if (this.log) console.log('LCD: Status'); break; // LCD status.
 		case 0xFF42: this.scy = data; break; // Set ScrollY coordinate.
 		case 0xFF43: this.scx = data; break; // Set ScrollX coordinate.
+		case 0xFF45: break; // LY Compare.
 		case 0xFF47: break; // Background palette.
 		default:
 			throw 'Error: Invalid GPU write to 0x' + address.toString(16).toUpperCase();

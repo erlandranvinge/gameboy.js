@@ -31,6 +31,12 @@ SPU.prototype.read = function(address) {
 };
 
 SPU.prototype.write = function(address, data) {
+
+	if (address >= 0xFF30 && address <= 0xFF3F) {
+		if (this.log) console.log('SPU Set wave pattern');
+		return;
+	}
+
 	switch(address) {
 		case 0xFF10: // Sound1 sweep.
 			if (this.log) console.log('SPU S1: Sweep.');
