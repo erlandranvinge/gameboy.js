@@ -103,6 +103,7 @@ Display.prototype.blit = function() {
 
 Display.prototype.updateTile = function(tileX, tileY) {
 	var address = 0x8000 + tileY * 512 + tileX * 16;
+	var palette = [255, 200, 128, 40];
 	for (var line = 0; line < 8; line++) {
 		var low = this.gpu.vram[address + line * 2];
 		var hi = this.gpu.vram[address + line * 2 + 1];
@@ -113,13 +114,17 @@ Display.prototype.updateTile = function(tileX, tileY) {
 			var py = tileY * 8 + line;
 			var mask = 1 << (7 - bit);
 			var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
-			var color = index ? 0 : 255;
+			var color = palette[index]; //index == 3 ? 0 : 255;
 			var offset = (px + py * 512) * 4;
 			this.tiles.data[offset] = color;
 			this.tiles.data[offset+1] = color;
 			this.tiles.data[offset+2] = color;
 		}
 	}
-}
+};
 
+Display.prototype.drawTiles = function() {
+	this.context.putImageData(this.tiles, 0, 0);
+//	this.context.putImageData(this.tiles, 0, 0, 512, 512);
+};
 

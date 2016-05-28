@@ -76,7 +76,7 @@ Debugger.prototype.deasm = function(address) {
 		inst += 'CB ' + Debugger.cbOpCodeNames[this.mmu.read(address + 1)];
 	}
 	result = result + inst;
-	result += pad.substr(0, 60 - result.length);
+	result += pad.substr(0, 40 - result.length);
 	return result + this.regs();
 };
 

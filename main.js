@@ -5,7 +5,7 @@ var cpu = new CPU(mmu);
 var dbg = new Debugger(cpu, mmu);
 gpu.cpu = cpu; // for now.
 
-mmu.setCartridge('roms/golf.gb');
+mmu.setCartridge('roms/tetris.gb');
 cpu.startRom();
 dbg.attach();
 
@@ -37,7 +37,8 @@ function tick(count) {
 			throw 'BOOT COMPLETED.';
 		}
 	}
-	gpu.display.blit();
+	//gpu.display.blit();
+	gpu.display.drawTiles();
 	setTimeout(tick, 5, 1000);
 }
 tick(1000);

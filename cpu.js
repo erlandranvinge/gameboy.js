@@ -78,7 +78,6 @@ CPU.prototype.step = function(dt) {
 	this.expectedCycles += self.frequency * dt;
 	if (this.halt || this.cycles > this.expectedCycles) // Too soon?
 		return;
-
 	/*
 	if (this.pc >= 0xDFFF)
 		throw 'cpu.pc is drifting';
