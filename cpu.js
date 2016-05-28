@@ -75,13 +75,10 @@ CPU.prototype.interrupt = function(address) {
 };
 
 CPU.prototype.step = function(dt) {
-	this.expectedCycles += self.frequency * dt;
-	if (this.halt || this.cycles > this.expectedCycles) // Too soon?
+	this.expectedCycles += this.frequency * dt;
+	if (this.halt || this.cycles > this.expectedCycles) { // Too soon?
 		return;
-	/*
-	if (this.pc >= 0xDFFF)
-		throw 'cpu.pc is drifting';
-	*/
+	}
 
 	var op = this.mmu.read(this.pc);
 	if (op === 0xCB) {
@@ -92,7 +89,7 @@ CPU.prototype.step = function(dt) {
 	}
 
 	var mmu = this.mmu;
-	var a = 0, b = 0, r = 0, d = 0, c = 0, hl = 0, sp = 0;
+	var a = 0, b = 0, r = 0, d = 0, c = 0, hl = 0, sp = 0, jmp = false;
 	switch (op) {
 		// 8-bit arithmetic.
 
@@ -214,26 +211,25 @@ CPU.prototype.step = function(dt) {
 		case 0x38: if (this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR C,r8
 		case 0x20: if (!this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR NZ,r8
 		case 0x30: if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
-		case 0xC3: this.pc = mmu.readWord(this.pc + 1); return; // JMP a16
+		case 0xC3: this.pc = mmu.readWord(this.pc + 1); jmp = true; break; // JMP a16
 		case 0xE9: this.pc = this.hl; break; // JP (HL)
 
 		case 0xC4: // CALL NZ, a16
 			if (!this.f.z()) {
 				mmu.writeWord(this.sp -= 2, this.pc + 3);
 				this.pc = mmu.readWord(this.pc + 1);
-				return;
+				jmp = true;
 			}
 			break;
 		case 0xCD: // CALL a16
 			mmu.writeWord(this.sp -= 2, this.pc + 3);
 			this.pc = mmu.readWord(this.pc + 1);
-			return;
-
-
-		case 0xC0: if (!this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; return; } break;// RET NZ
-		case 0xC8: if (this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; return; } break; // RET Z
-		case 0xC9: this.pc = mmu.readWord(this.sp); this.sp += 2; return; // RET
-		case 0xD9: this.pc = mmu.readWord(this.sp); this.sp += 2; this.ime = true; return; // RETI
+			jmp = true;
+			break;
+		case 0xC0: if (!this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; } break;// RET NZ
+		case 0xC8: if (this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; } break; // RET Z
+		case 0xC9: this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; break; // RET
+		case 0xD9: this.pc = mmu.readWord(this.sp); this.sp += 2; this.ime = true; jmp = true; break; // RETI
 
 		// Pops and pushes.
 		case 0xC5: mmu.writeWord(this.sp -= 2, this.bc); break; // PUSH BC
@@ -300,16 +296,17 @@ CPU.prototype.step = function(dt) {
 			throw 'Error: Invalid OpCode 0x' + op.toString(16).toUpperCase() + ' @ 0x' +
 			cpu.pc.toString(16).toUpperCase();
 	}
-	this.pc += op <= 0xFF ? this.opCodeSizes[op] : 2;
+
+	if (!jmp)
+		this.pc += op <= 0xFF ? this.opCodeSizes[op] : 2;
 };
 
 CPU.prototype.startRom = function() {
-	this.af = 0x1;
-	this.bc = 0x13;
-	this.de = 0xD8;
-	this.hl = 0x14D;
+	this.af = 0x01B0;
+	this.bc = 0x0013;
+	this.de = 0x00D8;
+	this.hl = 0x014D;
 	this.sp = 0xFFFE;
-
 	this.pc = 0x100;
 	this.mmu.booting = false;
 };

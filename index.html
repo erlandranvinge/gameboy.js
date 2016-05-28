@@ -4,11 +4,38 @@
 	<title>gameboy.js :)</title>
 	<style>
 		body { margin: 0; padding: 0}
-		canvas { width: 40%; height: 40%; border: 2px solid grey;  image-rendering: pixelated; }
+		canvas { width: 100%; border: 2px solid grey;  image-rendering: pixelated; }
+		table { font-size: 12pt; width:200px; }
 	</style>
 </head>
 <body>
 	<canvas id="canvas" width="160" height="144"></canvas>
+	<table>
+		<tr>
+			<td>af=</td><td id="af"></td>
+			<td></td><td></td>
+			<td><input id="z" type="checkbox" />Z</td>
+		</tr>
+		<tr>
+			<td>bc=</td><td id="bc"></td>
+			<td></td><td></td>
+			<td><input id="n" type="checkbox" />N</td>
+		</tr>
+		<tr>
+			<td>de=</td><td id="de"></td>
+			<td>ly=</td><td id="ly"></td>
+			<td><input id="h" type="checkbox" />H</td>
+		</tr>
+		<tr>
+			<td>hl=</td><td id="hl"></td>
+			<td></td><td></td>
+			<td><input id="c" type="checkbox" />C</td>
+		</tr>
+		<tr>
+			<td>pc=</td><td id="pc"></td>
+		</tr>
+	</table>
+
 	<script src="gpu.js"></script>
 	<script src="spu.js"></script>
 	<script src="mmu.js"></script>

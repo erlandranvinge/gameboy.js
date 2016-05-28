@@ -1,5 +1,48 @@
 
 var GPU = function() {
+	this.frequency = 4194304; // ~4.194 MHz
+	this.expectedCycle = 0;
+	this.cycle = 0;
+	this.stat = 0;
+	this.sy = 0;
+	this.sx = 0;
+	this.ly = 0;
+
+};
+
+GPU.prototype.tick = function(dt) {
+	this.expectedCycle += this.frequency * dt;
+	if (this.cycle > this.expectedCycle)
+		return;
+
+};
+
+GPU.prototype.read = function(address) {
+	switch(address) {
+		case 0xFF42: return this.sy;
+		case 0xFF43: return this.sx;
+		case 0xFF44: return this.ly;
+		default:
+			throw 'Error: Invalid GPU read from 0x' + address.toString(16).toUpperCase();
+	}
+};
+
+GPU.prototype.write = function(address, data) {
+	switch(address) {
+		case 0xFF41:
+			this.stat = data & 0x78;
+			break;
+
+		case 0xFF42: this.sy = data; break;
+		case 0xFF43: this.sx = data; break;
+		case 0xFF44: this.ly = 0x0; break;
+		default:
+			throw 'Error: Invalid GPU write to 0x' + address.toString(16).toUpperCase();
+	}
+};
+
+/*
+var GPU = function() {
 	this.cpu = null;
 	this.frequency = 4194304; // ~4.194 MHz (vblank @ 59.7 Hz => every 70.251:th cycle )
 	this.cycle = 0;
@@ -9,7 +52,6 @@ var GPU = function() {
 	this.scx = 0x0;
 	this.scy = 0x0;
 	this.vram = [];
-	this.log = false;
 	for (var address = 0x8000; address < 0xA000; address++)
 		this.vram[address] = 0x0;
 
@@ -55,8 +97,15 @@ GPU.prototype.write = function(address, data) {
 	}
 
 	switch(address) {
-		case 0xFF40: this.control = data; break; // LCD Control.
-		case 0xFF41: if (this.log) console.log('LCD: Status'); break; // LCD status.
+		case 0xFF40:
+			console.log('LCD: Control');
+			console.log(bits(data, 8));
+
+			break;
+		case 0xFF41:
+			console.log('LCD: Status');
+			console.log(bits(data, 8));
+			break; // LCD status.
 		case 0xFF42: this.scy = data; break; // Set ScrollY coordinate.
 		case 0xFF43: this.scx = data; break; // Set ScrollX coordinate.
 		case 0xFF45: break; // LY Compare.
@@ -128,3 +177,4 @@ Display.prototype.drawTiles = function() {
 //	this.context.putImageData(this.tiles, 0, 0, 512, 512);
 };
 
+*/

@@ -1,25 +1,22 @@
 
-var Debugger = function(cpu, mmu) {
-	this.cpu = cpu;
-	this.mmu = mmu;
-
-	this.history = [];
-	this.lastOp = null;
-	this.attached = false;
-};
-
-Debugger.prototype.bitString = function(data, length) {
-	length = length || 16;
-	var result = '';
-	while (length-- > 0)
-		result += ((data & (1 << length)) ? '1': '0');
-	return result;
-};
-
-Debugger.prototype.hexString = function(data, size) {
+function hex(data, size) {
 	size = (size || 16) / 4;
 	var str = data.toString(16).toUpperCase();
-	return '0x00000000'.substr(0, (2 + size) - str.length) + str;
+	return '0000'.substr(0, size - str.length) + str;
+}
+
+function bits(data, size) {
+	size = size || 16;
+	var result = '';
+	while (size-- > 0)
+		result += ((data & (1 << size)) ? '1': '0');
+	return result;
+}
+
+var Debugger = function(cpu, mmu, gpu) {
+	this.cpu = cpu;
+	this.mmu = mmu;
+	this.gpu = gpu;
 };
 
 Debugger.prototype.regs = function(verbose) {
@@ -27,12 +24,12 @@ Debugger.prototype.regs = function(verbose) {
 
 	if (!verbose) {
 		result = '';
-		result += 'PC=' + this.hexString(this.cpu.pc) + ', ';
-		result += 'SP=' + this.hexString(this.cpu.sp) + ', ';
-		result += 'AF=' + this.hexString(this.cpu.af) + ', ';
-		result += 'BC=' + this.hexString(this.cpu.bc) + ', ';
-		result += 'DE=' + this.hexString(this.cpu.de) + ', ';
-		result += 'HL=' + this.hexString(this.cpu.hl) + ', F=';
+		result += 'PC=' + hex(this.cpu.pc) + ', ';
+		result += 'SP=' + hex(this.cpu.sp) + ', ';
+		result += 'AF=' + hex(this.cpu.af) + ', ';
+		result += 'BC=' + hex(this.cpu.bc) + ', ';
+		result += 'DE=' + hex(this.cpu.de) + ', ';
+		result += 'HL=' + hex(this.cpu.hl) + ', F=';
 		result += this.cpu.f.z() ? 'Z' : '-';
 		result += this.cpu.f.n() ? 'N' : '-';
 		result += this.cpu.f.h() ? 'H' : '-';
@@ -42,13 +39,13 @@ Debugger.prototype.regs = function(verbose) {
 
 	result = '';
 	result += '_______________________________________________________________________________\n';
-	result += '| PC: ' + this.hexString(this.cpu.pc) + ' (' + this.bitString(this.cpu.pc) + ')' +
-		'\tSP: ' + this.hexString(this.cpu.sp) + ' (' + this.bitString(this.cpu.sp) + ')                 |\n';
-	result += '| AF: ' + this.hexString(this.cpu.af) + ' (' + this.bitString(this.cpu.af) + ')' +
-		'\tBC: ' + this.hexString(this.cpu.bc) + ' (' + this.bitString(this.cpu.bc) + ')' + '\t        ZNHC  |\n';
-	result += '| DE: ' + this.hexString(this.cpu.de) + ' (' + this.bitString(this.cpu.de) + ')' +
-		'\tHL: ' + this.hexString(this.cpu.hl) + ' (' + this.bitString(this.cpu.hl) + ')' +
-		'\t Flags: ' + this.bitString(this.cpu.af).substr(8, 4) + '  |\n';
+	result += '| PC: ' + hex(this.cpu.pc) + ' (' + bits(this.cpu.pc) + ')' +
+		'\tSP: ' + hex(this.cpu.sp) + ' (' + bits(this.cpu.sp) + ')                 |\n';
+	result += '| AF: ' + hex(this.cpu.af) + ' (' + bits(this.cpu.af) + ')' +
+		'\tBC: ' + hex(this.cpu.bc) + ' (' + bits(this.cpu.bc) + ')' + '\t        ZNHC  |\n';
+	result += '| DE: ' + hex(this.cpu.de) + ' (' + bits(this.cpu.de) + ')' +
+		'\tHL: ' + hex(this.cpu.hl) + ' (' + bits(this.cpu.hl) + ')' +
+		'\t Flags: ' + bits(this.cpu.af).substr(8, 4) + '  |\n';
 	result += '|_____________________________________________________________________________|';
 	return result;
 };
@@ -62,11 +59,11 @@ Debugger.prototype.deasm = function(address) {
 	var size = this.cpu.opCodeSizes[opCode];
 	var result = '';//(address == this.cpu.pc) ? '-> ' : '   ';
 
-	result += this.hexString(address) + ': ' + this.hexString(opCode, 8);
+	result += hex(address) + ': ' + hex(opCode, 8);
 	if (opCode === 0xCB || size > 1) {
-		result += ' ' + this.hexString(this.mmu.read(address + 1), 8);
+		result += ' ' + hex(this.mmu.read(address + 1), 8);
 		if (size > 2)
-			result += ' ' + this.hexString(this.mmu.read(address + 2), 8);
+			result += ' ' + hex(this.mmu.read(address + 2), 8);
 	}
 	result += pad.substr(0, 25 - result.length) + ' | ';
 	var inst = '';
@@ -75,9 +72,13 @@ Debugger.prototype.deasm = function(address) {
 	} else {
 		inst += 'CB ' + Debugger.cbOpCodeNames[this.mmu.read(address + 1)];
 	}
+
+	inst = inst.replace('a16', hex(this.mmu.readWord(address + 1)));
+	inst = inst.replace('d8', hex(this.mmu.read(address + 1), 8));
+
 	result = result + inst;
 	result += pad.substr(0, 40 - result.length);
-	return result + this.regs();
+	return result;
 };
 
 Debugger.prototype.dump = function(address, length) {
@@ -86,40 +87,27 @@ Debugger.prototype.dump = function(address, length) {
 	var result = '';
 	for (var a = address; a < address + length; a++) {
 		var data = this.mmu.read(a);
-		result += this.hexString(a) + ': ';
-		result += this.hexString(data, 8) + ' | ' + data + '\n';
+		result += hex(a) + ': ';
+		result += hex(data, 8) + ' | ' + data + '\n';
 	}
 	console.log(result);
 };
 
-Debugger.prototype.attach = function() {
-	console.info('Debugger attached.');
-	this.history = [];
-	this.lastOp = cpu.pc;
-	this.attached = true;
-};
 
 Debugger.prototype.tick = function() {
-	if (this.attached && cpu.pc != this.lastOp) {
-		this.history.push(dbg.deasm());
-		this.lastOp = cpu.pc;
-	}
-};
+	document.getElementById('af').innerHTML = hex(cpu.af);
+	document.getElementById('bc').innerHTML = hex(cpu.bc);
+	document.getElementById('de').innerHTML = hex(cpu.de);
+	document.getElementById('hl').innerHTML = hex(cpu.hl);
+	document.getElementById('pc').innerHTML = hex(cpu.pc);
 
-Debugger.prototype.detach = function() {
-	console.info('Debugger detached.');
-	this.attached = false;
-	var start = Math.max(0, this.history.length - 10);
-	for (var i = start; i < this.history.length; i++) {
-		var line = this.history[i];
-		console.log(line);
-	}
-};
+	//document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
 
-Debugger.prototype.getOpCodeSize = function(opCode) {
-	if (opCode === 0xCB)
-		return 2;
-	return this.mmu.read(opCode);
+
+	document.getElementById('z').checked = cpu.f.z();
+	document.getElementById('n').checked = cpu.f.n();
+	document.getElementById('h').checked = cpu.f.h();
+	document.getElementById('c').checked = cpu.f.c();
 };
 
 Debugger.opCodeNames = [
