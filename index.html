@@ -4,7 +4,7 @@
 	<title>gameboy.js :)</title>
 	<style>
 		body { margin: 0; padding: 0}
-		canvas { width: 100%; border: 2px solid grey;  image-rendering: pixelated; }
+		canvas { width: 100%; border: 2px solid grey; image-rendering: pixelated; }
 		table { font-size: 12pt; width:200px; }
 	</style>
 </head>
@@ -35,6 +35,7 @@
 			<td>pc=</td><td id="pc"></td>
 		</tr>
 	</table>
+	<canvas id="vram" width="128" height="128" style="border:1px solid red;"></canvas>
 
 	<script src="gpu.js"></script>
 	<script src="spu.js"></script>

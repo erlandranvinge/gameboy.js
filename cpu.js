@@ -1,6 +1,7 @@
 
 var CPU = function(mmu) {
-	this.frequency = 4194304; // ~4.194 MHz
+	this.mmu = mmu;
+
 	this.a = function() {}; this.f = function() {};
 	this.b = function() {}; this.c = function() {};
 	this.d = function() {}; this.e = function() {};
@@ -17,15 +18,7 @@ var CPU = function(mmu) {
 	this.f.n = function() { return self.af & 0x40 ? 1 : 0; };
 	this.f.h = function() { return self.af & 0x20 ? 1 : 0; };
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
-
-	this.pc = 0x0;
-	this.sp = 0xFFFE;
 	this.halt = false;
-	this.ime = false;
-	this.if = false;
-	this.mmu = mmu;
-	this.cycles = 0;
-	this.expectedCycles = 0;
 };
 
 CPU.prototype.installRegister = function(name, value) {
@@ -58,34 +51,15 @@ CPU.prototype.jump = function(address) {
 	this.pc += address;
 };
 
-CPU.prototype.interrupt = function(address) {
-	if (!this.ime)
-		return;
-
-	switch(address) {
-		case 0x0040: // VBLANK
-			this.if = true;
-			this.ime = false;
-			this.mmu.writeWord(this.sp -= 2, this.pc);
-			this.pc = address;
-			break;
-		default:
-			throw 'Error: Invalid interrupt: 0x' + address.toString(16).toUpperCase() + '.';
-	}
-};
-
 CPU.prototype.step = function(dt) {
-	this.expectedCycles += this.frequency * dt;
-	if (this.halt || this.cycles > this.expectedCycles) { // Too soon?
-		return;
-	}
 
 	var op = this.mmu.read(this.pc);
+	var cycles = 0;
 	if (op === 0xCB) {
 		op = 0xCB00 | this.mmu.read(this.pc + 1);
-		this.cycles += 8;
+		cycles = 8;
 	} else {
-		this.cycles += this.opCodeCycles[op];
+		cycles = this.opCodeCycles[op];
 	}
 
 	var mmu = this.mmu;
@@ -299,6 +273,8 @@ CPU.prototype.step = function(dt) {
 
 	if (!jmp)
 		this.pc += op <= 0xFF ? this.opCodeSizes[op] : 2;
+
+	return cycles;
 };
 
 CPU.prototype.startRom = function() {

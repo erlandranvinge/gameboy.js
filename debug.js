@@ -13,6 +13,10 @@ function bits(data, size) {
 	return result;
 }
 
+function signed(data) {
+	return data & 0x80 ? data - 256 : data;
+}
+
 var Debugger = function(cpu, mmu, gpu) {
 	this.cpu = cpu;
 	this.mmu = mmu;
@@ -75,6 +79,8 @@ Debugger.prototype.deasm = function(address) {
 
 	inst = inst.replace('a16', hex(this.mmu.readWord(address + 1)));
 	inst = inst.replace('d8', hex(this.mmu.read(address + 1), 8));
+	inst = inst.replace('a8', hex(this.mmu.read(address + 1), 8));
+	inst = inst.replace('r8', signed(this.mmu.read(address + 1)));
 
 	result = result + inst;
 	result += pad.substr(0, 40 - result.length);
@@ -94,20 +100,48 @@ Debugger.prototype.dump = function(address, length) {
 };
 
 
-Debugger.prototype.tick = function() {
+Debugger.prototype.step = function() {
 	document.getElementById('af').innerHTML = hex(cpu.af);
 	document.getElementById('bc').innerHTML = hex(cpu.bc);
 	document.getElementById('de').innerHTML = hex(cpu.de);
 	document.getElementById('hl').innerHTML = hex(cpu.hl);
 	document.getElementById('pc').innerHTML = hex(cpu.pc);
 
-	//document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
-
+	document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
 
 	document.getElementById('z').checked = cpu.f.z();
 	document.getElementById('n').checked = cpu.f.n();
 	document.getElementById('h').checked = cpu.f.h();
 	document.getElementById('c').checked = cpu.f.c();
+};
+
+Debugger.prototype.drawTiles = function(canvasId) {
+	var canvas = document.getElementById(canvasId);
+	var ctx = canvas.getContext('2d');
+	var palette = [210, 160, 128, 40];
+	for (var tileY = 0; tileY < 16; tileY++) {
+		for (var tileX = 0; tileX < 16; tileX++) {
+			var address = 0x8000 + tileY * 512 + tileX * 16;
+			var tile = ctx.createImageData(8, 8);
+			for (var line = 0; line < 8; line++) {
+				var low = this.gpu.vram[address + line * 2];
+				var hi = this.gpu.vram[address + line * 2 + 1];
+
+				for (var bit = 0; bit < 8; bit++)
+				{
+					var mask = 1 << (7 - bit);
+					var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
+					var color = palette[index]; //index == 3 ? 0 : 255;
+					var offset = (bit + line * 8) * 4;
+					tile.data[offset] = color;
+					tile.data[offset+1] = color;
+					tile.data[offset+2] = color;
+					tile.data[offset+3] = 0xFF;
+				}
+			}
+			ctx.putImageData(tile, tileX * 8, tileY * 8);
+		}
+	}
 };
 
 Debugger.opCodeNames = [

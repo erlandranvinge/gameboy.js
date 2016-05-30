@@ -1,45 +1,129 @@
 
-var GPU = function() {
-	this.frequency = 4194304; // ~4.194 MHz
-	this.expectedCycle = 0;
-	this.cycle = 0;
-	this.stat = 0;
-	this.sy = 0;
-	this.sx = 0;
-	this.ly = 0;
-
+var Display = function(gpu, canvasId) {
+	this.gpu = gpu;
+	this.canvas = document.getElementById(canvasId);
+	if (!this.canvas)
+		throw 'Error: Missing canvas element.';
+	this.context = this.canvas.getContext('2d');
+	this.context.imageSmoothingEnabled = false;
+	this.buffer = this.context.getImageData(0, 0, this.canvas.width, this.canvas.height);
+	console.info('Display (%f, %f) attached.', this.canvas.width, this.canvas.height);
 };
 
-GPU.prototype.tick = function(dt) {
-	this.expectedCycle += this.frequency * dt;
-	if (this.cycle > this.expectedCycle)
-		return;
+Display.prototype.scanline = function() {
+	var data = this.buffer.data;
+	var offset = this.gpu.ly * 4 * this.canvas.width;
+	for (var x = 0; x < this.canvas.width * 4; x+=4) {
+		data[offset + x] = 0x0;
+		data[offset + x + 1] = 0x0;
+		data[offset + x + 2] = 0x0;
+		data[offset + x + 3] = 0xFF;
+	}
+};
 
+Display.prototype.blit = function() {
+	this.context.putImageData(this.buffer, 0, 0);
+	console.log('BLIT!');
+};
+
+
+var GPUMode = { hBlank: 0, vBlank: 1, oamRead: 2, transfer: 3 };
+
+var GPU = function(canvasId) {
+	this.display = new Display(this, canvasId);
+	this.vram = [];
+	this.modeCycle = 0;
+	this.mode = 0;
+	this.ly = 0;
+	this.control = 0;
+	this.stat = 0;
+	this.scy = 0;
+	this.scx = 0;
+};
+
+GPU.prototype.step = function(cycles) {
+	switch(this.mode) {
+		case GPUMode.hBlank:
+			if (this.modeCycle >= 204) {
+				this.modeCycle = -cycles;
+				this.ly++;
+				if (this.ly == 143) {
+					this.mode = GPUMode.hBlank;
+					this.display.blit();
+				} else {
+					this.mode = GPUMode.oamRead;
+				}
+			}
+			break;
+		case GPUMode.vBlank:
+			if (this.modeCycle >= 456) {
+				this.ly++;
+				this.modeCycle = -cycles;
+				if (this.ly > 153) {
+					this.mode = GPUMode.oamRead;
+					this.ly = 0;
+				}
+			}
+			break;
+		case GPUMode.oamRead:
+			if (this.modeCycle >= 80) {
+				this.mode = GPUMode.transfer;
+				this.modeCycle = -cycles;
+			}
+			break;
+		case GPUMode.transfer: // Transfer
+			if (this.modeCycle >= 173) {
+				this.mode = GPUMode.hBlank;
+				this.modeCycle = -cycles;
+				this.display.scanline();
+			}
+			break;
+	}
+	this.modeCycle += cycles;
 };
 
 GPU.prototype.read = function(address) {
 	switch(address) {
-		case 0xFF42: return this.sy;
-		case 0xFF43: return this.sx;
-		case 0xFF44: return this.ly;
+		case 0xFF44: return this.ly; break;
 		default:
 			throw 'Error: Invalid GPU read from 0x' + address.toString(16).toUpperCase();
 	}
 };
 
 GPU.prototype.write = function(address, data) {
-	switch(address) {
-		case 0xFF41:
-			this.stat = data & 0x78;
-			break;
 
-		case 0xFF42: this.sy = data; break;
-		case 0xFF43: this.sx = data; break;
-		case 0xFF44: this.ly = 0x0; break;
+	if (address >= 0x8800 && address <= 0x97FF) {
+		this.vram[address] = data;
+		return;
+	}
+
+	if (address >= 0x8000 && address <= 0x8FFF) {
+		this.vram[address] = data;
+		return;
+	}
+
+	if (address >= 0x9800 && address <= 0x9FFF) {
+		this.vram[address] = data;
+		return;
+	}
+
+
+	switch(address) {
+		case 0xFF40:
+			console.log('LCD Control:', bits(data, 8));
+			this.control = data;
+			break;
+		case 0xFF41:
+			console.log('LCD STAT: ', bits(data, 8));
+			this.stat = (this.stat & 0x87) | (data & 0x78);
+			break;
+		case 0xFF42: this.scy = data; break;
+		case 0xFF43: this.scx = data; break;
 		default:
 			throw 'Error: Invalid GPU write to 0x' + address.toString(16).toUpperCase();
 	}
 };
+
 
 /*
 var GPU = function() {

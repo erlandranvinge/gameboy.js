@@ -1,4 +1,4 @@
-var gpu = new GPU();
+var gpu = new GPU('canvas');
 var spu = new SPU();
 var mmu = new MMU(gpu, spu);
 var cpu = new CPU(mmu);
@@ -9,32 +9,39 @@ mmu.setCartridge('roms/tetris.gb');
 cpu.startRom();
 
 function tick() {
-
-	var cycles = cpu.cycles;
-	while (cycles == cpu.cycles) {
-		var dt = 0.000001;
-		cpu.step(dt);
-		gpu.tick(dt);
-		spu.tick(dt);
-		dbg.tick();
-	}
+	var dt = 0.000001;
+	var cycles = cpu.step(dt);
+	gpu.step(cycles);
+	dbg.step();
 }
 
-tick();
+console.log(dbg.deasm());
 
+var exit = false;
 function runTo(address) {
-	console.log('Running...');
-	while(cpu.pc != address) {
+	for (var i = 0; i < 100; i++) {
+		if (cpu.pc === address)
+			return;
 		tick();
 	}
-	console.log(dbg.deasm());
+	if (exit) {
+		console.log('Bailed out!');
+		return;
+	}
+	setTimeout(runTo, 2, address);
 }
 
 document.addEventListener('keydown', function(e) {
 	switch(e.keyCode) {
+		case 27: exit = true; break;
 		case 32:
+			exit = false;
 			tick(1);
 			console.log(dbg.deasm());
+			break;
+		case 65:
+			dbg.drawTiles('vram');
+			console.log('Tiles drawn');
 			break;
 		default:
 	}
