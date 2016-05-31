@@ -105,12 +105,15 @@ Debugger.prototype.step = function() {
 	document.getElementById('bc').innerHTML = hex(cpu.bc);
 	document.getElementById('de').innerHTML = hex(cpu.de);
 	document.getElementById('hl').innerHTML = hex(cpu.hl);
+	document.getElementById('sp').innerHTML = hex(cpu.sp);
 	document.getElementById('pc').innerHTML = hex(cpu.pc);
 
 	document.getElementById('lcdc').innerHTML = hex(gpu.control, 8);
 	document.getElementById('stat').innerHTML = hex(gpu.stat, 8);
 	document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
 	document.getElementById('cnt').innerHTML = gpu.cnt();
+	document.getElementById('ie').innerHTML = hex(cpu.ie, 8);
+
 
 	document.getElementById('z').checked = cpu.f.z();
 	document.getElementById('n').checked = cpu.f.n();

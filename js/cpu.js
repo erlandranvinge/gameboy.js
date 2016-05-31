@@ -23,6 +23,7 @@ var CPU = function(mmu) {
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
 	this.halt = false;
 	this.ime = false;
+	this.ie = 0x0;
 };
 
 CPU.prototype.installRegister = function(name, value) {
@@ -56,8 +57,11 @@ CPU.prototype.jump = function(address) {
 };
 
 CPU.prototype.interrupt = function(address) {
-	if (!this.ime) return;
+	this.ie |= 0x1;
 
+	if (!this.ime) return;
+	this.ime = false;
+	
 	var ie = this.mmu.read(0xFFFF);
 	if (ie & 0x1) {
 		console.log('VBLANK @ ', hex(this.pc));
