@@ -107,12 +107,18 @@ Debugger.prototype.step = function() {
 	document.getElementById('hl').innerHTML = hex(cpu.hl);
 	document.getElementById('pc').innerHTML = hex(cpu.pc);
 
+	document.getElementById('lcdc').innerHTML = hex(gpu.control, 8);
+	document.getElementById('stat').innerHTML = hex(gpu.stat, 8);
 	document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
+	document.getElementById('cnt').innerHTML = gpu.cnt();
 
 	document.getElementById('z').checked = cpu.f.z();
 	document.getElementById('n').checked = cpu.f.n();
 	document.getElementById('h').checked = cpu.f.h();
 	document.getElementById('c').checked = cpu.f.c();
+
+	document.getElementById('ime').innerHTML = cpu.ime;
+
 };
 
 Debugger.prototype.drawTiles = function(canvasId) {

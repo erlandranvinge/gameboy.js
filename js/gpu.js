@@ -26,19 +26,27 @@ Display.prototype.blit = function() {
 	console.log('BLIT!');
 };
 
-
 var GPUMode = { hBlank: 0, vBlank: 1, oamRead: 2, transfer: 3 };
 
 var GPU = function(canvasId) {
 	this.display = new Display(this, canvasId);
 	this.vram = [];
 	this.modeCycle = 0;
-	this.mode = 0;
-	this.ly = 0;
-	this.control = 0;
-	this.stat = 0;
+	this.mode = 1;
+	this.ly = 144;
+	this.control = 0x91;
+	this.stat = 0x85;
 	this.scy = 0;
 	this.scx = 0;
+};
+
+GPU.prototype.cnt = function() {
+	switch(this.mode) {
+		case GPUMode.hBlank: return 204 - this.modeCycle;
+		case GPUMode.vBlank: return 456 - this.modeCycle;
+		case GPUMode.oamRead: return 80 - this.modeCycle;
+		case GPUMode.transfer: return 173 - this.modeCycle;
+	}
 };
 
 GPU.prototype.step = function(cycles) {
@@ -47,8 +55,9 @@ GPU.prototype.step = function(cycles) {
 			if (this.modeCycle >= 204) {
 				this.modeCycle = -cycles;
 				this.ly++;
-				if (this.ly == 143) {
-					this.mode = GPUMode.hBlank;
+				if (this.ly == 144) {
+					this.mode = GPUMode.vBlank;
+					this.cpu.interrupt(Interrupt.vBlank);
 					this.display.blit();
 				} else {
 					this.mode = GPUMode.oamRead;
@@ -57,8 +66,8 @@ GPU.prototype.step = function(cycles) {
 			break;
 		case GPUMode.vBlank:
 			if (this.modeCycle >= 456) {
-				this.ly++;
 				this.modeCycle = -cycles;
+				this.ly++;
 				if (this.ly > 153) {
 					this.mode = GPUMode.oamRead;
 					this.ly = 0;
@@ -79,6 +88,7 @@ GPU.prototype.step = function(cycles) {
 			}
 			break;
 	}
+	this.stat = this.stat & 0xFC | this.mode;
 	this.modeCycle += cycles;
 };
 

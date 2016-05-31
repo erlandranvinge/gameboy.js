@@ -1,12 +1,13 @@
 
-var MMU = function(gpu, spu) {
+var MMU = function(gpu, spu, io) {
 	this.booting = true;
 	this.memory = [];
 	this.gpu = gpu;
 	this.spu = spu;
+	this.io = io;
 	this.log = false;
 
-	for (var address = 0; address < 0xFFFF; address++)
+	for (var address = 0; address <= 0xFFFF; address++)
 		this.memory[address] = 0x0;
 };
 
@@ -26,10 +27,14 @@ MMU.prototype.read = function(address) {
 		address >= 0x8000 && address < 0xA000)
 		return this.gpu.read(address);
 
+	if (address == 0xFF00)
+		return this.io.read(address);
+
 	return this.memory[address];
 };
 
 MMU.prototype.write = function(address, data) {
+
 	if (address >= 0xE000 && address <= 0xFE00)
 		address -= 0x2000; // Memory repeat
 
@@ -48,6 +53,9 @@ MMU.prototype.write = function(address, data) {
 		this.gpu.write(address, data);
 		return;
 	}
+
+	if (address == 0xFF00)
+		this.io.write(address, data);
 
 	this.memory[address] = data;
 };
@@ -84,7 +92,7 @@ MMU.prototype.setCartridge = function(url) {
 		romSize: rom.charCodeAt(0x0148),
 		ramSize: rom.charCodeAt(0x0149)
 	};
-	console.log('Starting game: ' + this.header.name);
+	console.log('Starting game: ' + this.header.name + ' type: ' + this.header.type);
 };
 
 MMU.prototype.bootProgram = [

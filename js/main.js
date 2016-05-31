@@ -1,9 +1,11 @@
 var gpu = new GPU('canvas');
+var io = new Io();
 var spu = new SPU();
-var mmu = new MMU(gpu, spu);
+var mmu = new MMU(gpu, spu, io);
 var cpu = new CPU(mmu);
 var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
+io.bind();
 
 mmu.setCartridge('roms/tetris.gb');
 cpu.startRom();
@@ -15,11 +17,14 @@ function tick() {
 	dbg.step();
 }
 
+dbg.step();
 console.log(dbg.deasm());
 
 var exit = false;
+var trace = false;
 function runTo(address) {
 	for (var i = 0; i < 100; i++) {
+		if (trace) console.log(dbg.deasm());
 		if (cpu.pc === address)
 			return;
 		tick();

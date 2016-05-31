@@ -13,12 +13,12 @@
 	<table>
 		<tr>
 			<td>af=</td><td id="af"></td>
-			<td></td><td></td>
+			<td>lcdc=</td><td id="lcdc"></td>
 			<td><input id="z" type="checkbox" />Z</td>
 		</tr>
 		<tr>
 			<td>bc=</td><td id="bc"></td>
-			<td></td><td></td>
+			<td>stat=</td><td id="stat"></td>
 			<td><input id="n" type="checkbox" />N</td>
 		</tr>
 		<tr>
@@ -28,20 +28,25 @@
 		</tr>
 		<tr>
 			<td>hl=</td><td id="hl"></td>
-			<td></td><td></td>
+			<td>cnt=</td><td id="cnt"></td>
 			<td><input id="c" type="checkbox" />C</td>
 		</tr>
 		<tr>
 			<td>pc=</td><td id="pc"></td>
 		</tr>
+		<tr>
+			<td>ime=</td><td id="ime"></td>
+		</tr>
+
 	</table>
 	<canvas id="vram" width="128" height="128" style="border:1px solid red;"></canvas>
 
-	<script src="gpu.js"></script>
-	<script src="spu.js"></script>
-	<script src="mmu.js"></script>
-	<script src="cpu.js"></script>
-	<script src="debug.js"></script>
-	<script src="main.js"></script>
+	<script src="js/gpu.js"></script>
+	<script src="js/spu.js"></script>
+	<script src="js/mmu.js"></script>
+	<script src="js/io.js"></script>
+	<script src="js/cpu.js"></script>
+	<script src="js/debug.js"></script>
+	<script src="js/main.js"></script>
 </body>
 </html>

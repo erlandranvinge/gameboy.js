@@ -1,7 +1,10 @@
 
+var Interrupt = {
+	vBlank: 0x40
+};
+
 var CPU = function(mmu) {
 	this.mmu = mmu;
-
 	this.a = function() {}; this.f = function() {};
 	this.b = function() {}; this.c = function() {};
 	this.d = function() {}; this.e = function() {};
@@ -19,6 +22,7 @@ var CPU = function(mmu) {
 	this.f.h = function() { return self.af & 0x20 ? 1 : 0; };
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
 	this.halt = false;
+	this.ime = false;
 };
 
 CPU.prototype.installRegister = function(name, value) {
@@ -49,6 +53,16 @@ CPU.prototype.flags = function(value, mask) {
 CPU.prototype.jump = function(address) {
 	if (address & 0x80) address -= 256;
 	this.pc += address;
+};
+
+CPU.prototype.interrupt = function(address) {
+	if (!this.ime) return;
+
+	var ie = this.mmu.read(0xFFFF);
+	if (ie & 0x1) {
+		console.log('VBLANK @ ', hex(this.pc));
+		this.pc = address;
+	}
 };
 
 CPU.prototype.step = function(dt) {
