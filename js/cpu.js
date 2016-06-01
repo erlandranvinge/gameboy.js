@@ -10,10 +10,10 @@ var CPU = function(mmu) {
 	this.d = function() {}; this.e = function() {};
 	this.h = function() {}; this.l = function() {};
 
-	this.installRegister('af', 0x01B0);
-	this.installRegister('bc', 0x0013);
-	this.installRegister('de', 0x00D8);
-	this.installRegister('hl', 0x014D);
+	this.af = this.register('af', 0x01B0);
+	this.bc = this.register('bc', 0x0013);
+	this.de = this.register('de', 0x00D8);
+	this.hl = this.register('hl', 0x014D);
 
 	this.f = {};
 	var self = this;
@@ -21,14 +21,14 @@ var CPU = function(mmu) {
 	this.f.n = function() { return self.af & 0x40 ? 1 : 0; };
 	this.f.h = function() { return self.af & 0x20 ? 1 : 0; };
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
+
 	this.ime = false;
 	this.ie = 0x0;
 	this.if = 0x0;
 	this.halt = false;
 };
 
-CPU.prototype.installRegister = function(name, value) {
-	this[name] = value;
+CPU.prototype.register = function(name, value) {
 	this[name[0]] = function(value) {
 		if (value === undefined) return (this[name] >>> 8) & 0xFF;
 		this[name] = ((value & 0xFF) << 8) | (this[name] & 0xFF);
@@ -37,6 +37,7 @@ CPU.prototype.installRegister = function(name, value) {
 		if (value === undefined) return this[name] & 0xFF;
 		this[name] = (value & 0xFF) | (this[name] & 0xFF00);
 	};
+	return value;
 };
 
 CPU.prototype.flags = function(value, mask) {
@@ -51,6 +52,7 @@ CPU.prototype.flags = function(value, mask) {
 	var nibble = result[0] << 7 | result[1] << 6 | result[2] << 5 | result[3] << 4;
 	this.af = (this.af & 0xFF0F) | nibble;
 };
+
 
 CPU.prototype.jump = function(address) {
 	if (address & 0x80) address -= 256;
@@ -69,6 +71,8 @@ CPU.prototype.interrupt = function(address) {
 		this.pc = address;
 	}
 };
+
+
 
 CPU.prototype.step = function(dt) {
 
@@ -255,7 +259,7 @@ CPU.prototype.step = function(dt) {
 		case 0xFF: mmu.writeWord(this.sp - 2, this.pc); this.pc = 0x38; break; // RST 38H
 		case 0x76: console.log('HALT'); this.halt = true; break;
 
-		// CB OpCodes
+		// CB OpCodes. MOVE!!!
 		case 0xCB09:
 			console.log('Warning: Likely wrong. Rotating through carry.')
 			c = this.c();
@@ -291,14 +295,26 @@ CPU.prototype.step = function(dt) {
 		case 0xCB27: a = this.a() << 1; this.flags(a, 'Z00C'); this.a(a); break; // CB SLA A
 		case 0xCB37: a = (this.a() << 4 & 0xF0) | (this.a() >> 4 & 0xF); this.a(a); this.flags(a, 'Z000'); break; // SWAP
 		default:
-			throw 'Error: Invalid OpCode 0x' + op.toString(16).toUpperCase() + ' @ 0x' +
-			cpu.pc.toString(16).toUpperCase();
+			console.log(dbg.deasm());
+			throw 'Error: Invalid OpCode 0x' + op.toString(16).toUpperCase() + ' @ 0x' + cpu.pc.toString(16).toUpperCase();
+
 	}
 
 	if (!jmp)
 		this.pc += op <= 0xFF ? this.opCodeSizes[op] : 2;
 
 	return cycles;
+};
+
+CPU.prototype.test = function(opCode) {
+	var regs = ['b', 'c', 'd', 'e', 'h', 'l', 'hl', 'a']
+	var reg = regs[opCode & 0x7];
+
+	
+
+
+
+//	this.flags(register() & (1 << bit), 'Z01-i');
 };
 
 CPU.prototype.startRom = function() {

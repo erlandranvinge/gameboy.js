@@ -1,3 +1,4 @@
+
 var gpu = new GPU('canvas');
 var io = new Io();
 var spu = new SPU();
@@ -23,7 +24,7 @@ console.log(dbg.deasm());
 var exit = false;
 var trace = false;
 function runTo(address) {
-	for (var i = 0; i < 100; i++) {
+	for (var i = 0; i < 10000; i++) {
 		if (trace) console.log(dbg.deasm());
 		if (cpu.pc === address)
 			return;
@@ -33,7 +34,7 @@ function runTo(address) {
 		console.log('Bailed out!');
 		return;
 	}
-	setTimeout(runTo, 2, address);
+	setTimeout(runTo, 0, address);
 }
 
 document.addEventListener('keydown', function(e) {
