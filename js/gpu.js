@@ -11,6 +11,56 @@ var Display = function(gpu, canvasId) {
 };
 
 Display.prototype.scanline = function() {
+
+	var y = this.gpu.ly;
+	var destination = this.buffer.data;
+	var palette = [255, 200, 128, 40];
+	for (var x = 0; x < 160; x++) {
+
+		var tileX = x / 8 | 0;
+		var tileY = y / 8 | 0;
+		var bit = x - tileX;
+		var line = y - tileY;
+
+		var address = 0x8000 + tileY * 512 + tileX * 16;
+		var low = this.gpu.vram[address + line * 2];
+		var hi = this.gpu.vram[address + line * 2 + 1];
+		var mask = 1 << (7 - bit);
+		var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
+		var color = palette[index];
+
+
+
+		var dAddress = (y * 160 + x) * 4;
+		destination[dAddress] = color;
+		destination[dAddress + 1] = color;
+		destination[dAddress + 2] = color;
+		destination[dAddress + 3] = 0xFF;
+	}
+
+	/*
+	var address = 0x8000 + tileY * 512 + tileX * 16;
+	var palette = [255, 200, 128, 40];
+	for (var line = 0; line < 8; line++) {
+		var low = this.gpu.vram[address + line * 2];
+		var hi = this.gpu.vram[address + line * 2 + 1];
+
+		for (var bit = 0; bit < 8; bit++)
+		{
+			var px = tileX * 8 + bit;
+			var py = tileY * 8 + line;
+			var mask = 1 << (7 - bit);
+			var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
+			var color = palette[index]; //index == 3 ? 0 : 255;
+			var offset = (px + py * 512) * 4;
+			this.tiles.data[offset] = color;
+			this.tiles.data[offset+1] = color;
+			this.tiles.data[offset+2] = color;
+		}
+	}*/
+
+
+	/*
 	var data = this.buffer.data;
 	var offset = this.gpu.ly * 4 * this.canvas.width;
 	for (var x = 0; x < this.canvas.width * 4; x+=4) {
@@ -18,7 +68,7 @@ Display.prototype.scanline = function() {
 		data[offset + x + 1] = 0x0;
 		data[offset + x + 2] = 0x0;
 		data[offset + x + 3] = 0xFF;
-	}
+	}*/
 };
 
 Display.prototype.blit = function() {
@@ -33,7 +83,8 @@ var GPU = function(canvasId) {
 	this.vram = [];
 	this.modeCycle = 0;
 	this.mode = 1;
-	this.ly = 144;
+	this.ly = 0x0;
+	this.lyc = 0x0;
 	this.control = 0x91;
 	this.stat = 0x85;
 	this.scy = 0;
@@ -94,7 +145,9 @@ GPU.prototype.step = function(cycles) {
 
 GPU.prototype.read = function(address) {
 	switch(address) {
-		case 0xFF44: return this.ly; break;
+		case 0xFF40: return this.control;
+		case 0xFF44: return this.ly;
+		case 0xFF45: return this.lyc;
 		default:
 			throw 'Error: Invalid GPU read from 0x' + address.toString(16).toUpperCase();
 	}
@@ -125,10 +178,11 @@ GPU.prototype.write = function(address, data) {
 			break;
 		case 0xFF41:
 			console.log('LCD STAT: ', bits(data, 8));
-			this.stat = (this.stat & 0x87) | (data & 0x78);
+			this.stat = (this.stat & 0x8F) | (data & 0x70);
 			break;
 		case 0xFF42: this.scy = data; break;
 		case 0xFF43: this.scx = data; break;
+		case 0xFF45: this.lyc = data; break;
 		default:
 			throw 'Error: Invalid GPU write to 0x' + address.toString(16).toUpperCase();
 	}

@@ -54,8 +54,21 @@ MMU.prototype.write = function(address, data) {
 		return;
 	}
 
-	if (address == 0xFF00)
+	if (address == 0xFF00) {
 		this.io.write(address, data);
+		return;
+	}
+
+	if (address == 0xFF46) {
+		this.memory[address] = data;
+		var source = address << 8;
+		if (source < 0x8000 || source >= 0xE000)
+			return;
+
+		for (var offset = 0; offset < 0xA0; offset++)
+			this.memory[0xFE00 + offset] = this.memory[source + offset]
+		return;
+	}
 
 	this.memory[address] = data;
 };

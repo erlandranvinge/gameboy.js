@@ -7,7 +7,7 @@ var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
 io.bind();
 
-mmu.setCartridge('roms/tetris.gb');
+mmu.setCartridge('roms/cpu_instrs.gb');
 cpu.startRom();
 
 function tick() {
@@ -46,7 +46,6 @@ document.addEventListener('keydown', function(e) {
 			break;
 		case 65:
 			dbg.drawTiles('vram');
-			console.log('Tiles drawn');
 			break;
 		default:
 	}

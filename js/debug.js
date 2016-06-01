@@ -113,6 +113,7 @@ Debugger.prototype.step = function() {
 	document.getElementById('ly').innerHTML = hex(gpu.ly, 8);
 	document.getElementById('cnt').innerHTML = gpu.cnt();
 	document.getElementById('ie').innerHTML = hex(cpu.ie, 8);
+	document.getElementById('if').innerHTML = hex(cpu.if, 8);
 
 
 	document.getElementById('z').checked = cpu.f.z();

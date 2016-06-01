@@ -21,9 +21,10 @@ var CPU = function(mmu) {
 	this.f.n = function() { return self.af & 0x40 ? 1 : 0; };
 	this.f.h = function() { return self.af & 0x20 ? 1 : 0; };
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
-	this.halt = false;
 	this.ime = false;
 	this.ie = 0x0;
+	this.if = 0x0;
+	this.halt = false;
 };
 
 CPU.prototype.installRegister = function(name, value) {
@@ -90,18 +91,22 @@ CPU.prototype.step = function(dt) {
 		case 0x0D: this.c(this.c() - 1); this.flags(this.c(), 'Z1H-'); break; // DEC C
 		case 0x15: this.d(this.d() - 1); this.flags(this.d(), 'Z1H-'); break; // DEC D
 		case 0x1D: this.e(this.e() - 1); this.flags(this.e(), 'Z1H-'); break; // DEC E
+		case 0x2D: this.l(this.l() - 1); this.flags(this.l(), 'Z1H-'); break; // DEC L
 
 		case 0x3C: this.a(this.a() + 1); this.flags(this.a(), 'Z0H-'); break; // INC A
 		case 0x04: this.b(this.b() + 1); this.flags(this.b(), 'Z0H-'); break; // INC B
 		case 0x0C: this.c(this.c() + 1); this.flags(this.c(), 'Z0H-'); break; // INC C
 		case 0x1C: this.e(this.e() + 1); this.flags(this.e(), 'Z0H-'); break; // INC E
 		case 0x24: this.h(this.h() + 1); this.flags(this.h(), 'Z0H-'); break; // INC H
+		case 0x2C: this.l(this.l() + 1); this.flags(this.l(), 'Z0H-'); break; // INC L
 		case 0x34: hl = (mmu.read(this.hl) + 1) & 0xFF; this.flags(hl, 'Z0H-'); mmu.write(this.hl, hl); break; // INC (HL)
 
 
 		// Unordered 8-bit arithmetic, please fix.
 		case 0xA9: a = this.a() ^ this.c(); this.a(a); this.flags(a, 'Z000'); break; // XOR C
+		case 0xAE: hl = mmu.read(this.hl); hl = hl ^ hl; this.flags(hl, 'Z000'); mmu.write(this.hl, hl); break; // XOR (HL)
 		case 0xAF: this.af = 0x80; break; // XOR A, A
+
 
 		case 0xA1: r = this.a() & this.c(); this.a(r); this.flags(r, 'Z010'); break; // AND C
 		case 0xA7: a = this.a() & this.a(); this.a(r); this.flags(a, 'Z010'); break; // AND A
@@ -110,9 +115,10 @@ CPU.prototype.step = function(dt) {
 
 		case 0xB0: a = this.a() | this.b(); this.a(a); this.flags(a, 'Z000'); break; // OR B
 		case 0xB1: a = this.a() | this.c(); this.a(a); this.flags(a, 'Z000'); break; // OR C
+		case 0xB7: a = this.a() | this.a(); this.a(a); this.flags(a, 'Z000'); break; // OR A
 		case 0x90: a = this.a() - this.b(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB B
 		case 0x95: a = this.a() - this.l(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB L
-
+		case 0xD6: a = this.a() - mmu.read(this.pc + 1); this.flags(a, 'Z1HC'); this.a(a); break; // SUB d8
 		case 0x0F: a = this.a(); c = a & 1 ? 1 : 0; a >>>= 1; this.flags(a, 'Z00' + c); this.a(a); break; // RRCA
 		case 0x2F: a = ~this.a(); this.a(a); this.flags(a, '-NH-'); break; // CPL (complement A)
 
@@ -120,8 +126,6 @@ CPU.prototype.step = function(dt) {
 		case 0xFE: d = this.a() - mmu.read(this.pc + 1); this.flags(d, 'Z1HC'); break; // CP d8
 		case 0xB9: d = this.a() - this.c(); this.flags(d, 'Z1HC'); break; // CP C
 		case 0xBE: d = this.a() - mmu.read(this.hl); this.flags(d, 'Z1HC'); break; // CP (HL)
-
-
 
 		case 0x80: a = this.a() + this.b(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, B
 		case 0x81: a = this.a() + this.c(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, C
@@ -144,12 +148,13 @@ CPU.prototype.step = function(dt) {
 		case 0x22: mmu.write(this.hl, this.a()); this.hl = (this.hl + 1) & 0xFFFF; break; // LD (HL+),A
 		case 0x32: mmu.write(this.hl, this.a()); this.hl = (this.hl - 1) & 0xFFFF; break; // LD (HL-),A
 
-
+		case 0x46: this.b(mmu.read(this.hl)); break; // LD B,(HL)
 		case 0x0E: this.c(mmu.read(this.pc + 1)); break; // LD C,d8
 		case 0x1E: this.e(mmu.read(this.pc + 1)); break; // LD E,d8
 		case 0x2E: this.l(mmu.read(this.pc + 1)); break; // LD L,d8
 		case 0x3E: this.a(mmu.read(this.pc + 1)); break; // LD A,d8
 		case 0x5E: this.e(mmu.read(this.hl)); break; // LD E,(HL)
+		case 0x4E: this.c(mmu.read(this.hl)); break; // LD C,(HL)
 		case 0x7E: this.a(mmu.read(this.hl)); break; // LD A,(HL)
 
 		case 0x47: this.b(this.a()); break; // LD B,A
@@ -204,8 +209,9 @@ CPU.prototype.step = function(dt) {
 		case 0x20: if (!this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR NZ,r8
 		case 0x30: if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
 		case 0xC3: this.pc = mmu.readWord(this.pc + 1); jmp = true; break; // JMP a16
+		case 0xCA: if (this.f.z()) { this.pc = mmu.readWord(this.pc + 1); jmp = true; } break; // JP Z, a16
 		case 0xE9: this.pc = this.hl; break; // JP (HL)
-
+		case 0xC2: if (!this.f.z()) { this.pc = mmu.readWord(this.pc + 1); jmp = true; } break; // JP NZ,a16
 		case 0xC4: // CALL NZ, a16
 			if (!this.f.z()) {
 				mmu.writeWord(this.sp -= 2, this.pc + 3);
