@@ -144,32 +144,29 @@ GPU.prototype.step = function(cycles) {
 };
 
 GPU.prototype.read = function(address) {
+
+	if (address >= 0x8000 && address <= 0x9FFF) {
+		return this.vram[address];
+	}
+
 	switch(address) {
 		case 0xFF40: return this.control;
+		case 0xFF41: return this.stat;
+		case 0xFF42: return this.scy;
+		case 0xFF43: return this.scx;
 		case 0xFF44: return this.ly;
 		case 0xFF45: return this.lyc;
 		default:
-			throw 'Error: Invalid GPU read from 0x' + address.toString(16).toUpperCase();
+			throw 'Error: Invalid GPU read from 0x' + address.toString(16).toUpperCase() + '.';
 	}
 };
 
 GPU.prototype.write = function(address, data) {
 
-	if (address >= 0x8800 && address <= 0x97FF) {
+	if (address >= 0x8000 && address <= 0x9FFF) {
 		this.vram[address] = data;
 		return;
 	}
-
-	if (address >= 0x8000 && address <= 0x8FFF) {
-		this.vram[address] = data;
-		return;
-	}
-
-	if (address >= 0x9800 && address <= 0x9FFF) {
-		this.vram[address] = data;
-		return;
-	}
-
 
 	switch(address) {
 		case 0xFF40:
@@ -184,7 +181,7 @@ GPU.prototype.write = function(address, data) {
 		case 0xFF43: this.scx = data; break;
 		case 0xFF45: this.lyc = data; break;
 		default:
-			throw 'Error: Invalid GPU write to 0x' + address.toString(16).toUpperCase();
+			console.warn('Warning: Invalid GPU write to 0x' + address.toString(16).toUpperCase());
 	}
 };
 

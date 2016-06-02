@@ -15,7 +15,7 @@ function tick() {
 	var dt = 0.000001;
 	var cycles = cpu.step(dt);
 	gpu.step(cycles);
-	dbg.step();
+	//dbg.step();
 }
 
 dbg.step();

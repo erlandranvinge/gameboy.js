@@ -26,7 +26,7 @@ SPU.prototype.tick = function(dt) {
 SPU.prototype.read = function(address) {
 	switch(address) {
 		default:
-			throw 'Unknown SPU read from 0x' + address.toString(16).toUpperCase();
+			console.warn('Unknown SPU read from 0x' + address.toString(16).toUpperCase());
 	}
 };
 
@@ -57,8 +57,16 @@ SPU.prototype.write = function(address, data) {
 			if (this.log) console.log('SPU S1: Hi-frequency.');
 			this.sound1.start();
 			break;
+		case 0xFF15:
+			break;
+		case 0xFF16:
+			if (this.log) console.log('SPU DUTY Length load.');
+			break;
 		case 0xFF17: // Sound2 envelope.
 			if (this.log) console.log('SPU S2: Envelope.');
+			break;
+		case 0xFF18:
+			if (this.log) console.log('Frequency LSB');
 			break;
 		case 0xFF19: // Sound4 frequency hi.
 			if (this.log) console.log('SPU S4: Hi-frequency.')
@@ -82,7 +90,7 @@ SPU.prototype.write = function(address, data) {
 			if (this.log) console.log('SPU: Sound on/off: 0x' + data.toString(16).toUpperCase());
 			break;
 		default:
-			throw 'Error: Unknown SPU write to 0x' + address.toString(16).toUpperCase();
+			console.warn('Warning: Unknown SPU write to 0x' + address.toString(16).toUpperCase());
 	}
 };
 

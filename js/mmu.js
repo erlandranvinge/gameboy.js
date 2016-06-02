@@ -39,7 +39,7 @@ MMU.prototype.write = function(address, data) {
 		address -= 0x2000; // Memory repeat
 
 	if (address < 0x8000) {
-		console.warn('Invalid read-only memory write @ 0x' + address.toString(16).toUpperCase());
+		// console.warn('Invalid read-only memory write @ 0x' + address.toString(16).toUpperCase());
 		return;
 	}
 
@@ -57,6 +57,10 @@ MMU.prototype.write = function(address, data) {
 	if (address == 0xFF00) {
 		this.io.write(address, data);
 		return;
+	}
+
+	if (address == 0xFF01) {
+		console.warn('Failed instruction: ' + hex(data, 8));
 	}
 
 	if (address == 0xFF46) {
