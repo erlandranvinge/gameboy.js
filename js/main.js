@@ -8,7 +8,8 @@ var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
 io.bind();
 
-mmu.setCartridge('roms/cpu_instrs.gb');
+mmu.setCartridge('roms/cpu_instrs' +
+	'.gb');
 cpu.startRom();
 
 function tick() {

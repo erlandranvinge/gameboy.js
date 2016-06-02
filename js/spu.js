@@ -26,7 +26,8 @@ SPU.prototype.tick = function(dt) {
 SPU.prototype.read = function(address) {
 	switch(address) {
 		default:
-			console.warn('Unknown SPU read from 0x' + address.toString(16).toUpperCase());
+			if (this.log)
+				console.warn('Unknown SPU read from 0x' + address.toString(16).toUpperCase());
 	}
 };
 
@@ -90,7 +91,8 @@ SPU.prototype.write = function(address, data) {
 			if (this.log) console.log('SPU: Sound on/off: 0x' + data.toString(16).toUpperCase());
 			break;
 		default:
-			console.warn('Warning: Unknown SPU write to 0x' + address.toString(16).toUpperCase());
+			if (this.log)
+				console.warn('Warning: Unknown SPU write to 0x' + address.toString(16).toUpperCase());
 	}
 };
 

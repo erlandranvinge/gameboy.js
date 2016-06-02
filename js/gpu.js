@@ -37,38 +37,6 @@ Display.prototype.scanline = function() {
 		destination[dAddress + 2] = color;
 		destination[dAddress + 3] = 0xFF;
 	}
-
-	/*
-	var address = 0x8000 + tileY * 512 + tileX * 16;
-	var palette = [255, 200, 128, 40];
-	for (var line = 0; line < 8; line++) {
-		var low = this.gpu.vram[address + line * 2];
-		var hi = this.gpu.vram[address + line * 2 + 1];
-
-		for (var bit = 0; bit < 8; bit++)
-		{
-			var px = tileX * 8 + bit;
-			var py = tileY * 8 + line;
-			var mask = 1 << (7 - bit);
-			var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
-			var color = palette[index]; //index == 3 ? 0 : 255;
-			var offset = (px + py * 512) * 4;
-			this.tiles.data[offset] = color;
-			this.tiles.data[offset+1] = color;
-			this.tiles.data[offset+2] = color;
-		}
-	}*/
-
-
-	/*
-	var data = this.buffer.data;
-	var offset = this.gpu.ly * 4 * this.canvas.width;
-	for (var x = 0; x < this.canvas.width * 4; x+=4) {
-		data[offset + x] = 0x0;
-		data[offset + x + 1] = 0x0;
-		data[offset + x + 2] = 0x0;
-		data[offset + x + 3] = 0xFF;
-	}*/
 };
 
 Display.prototype.blit = function() {
@@ -179,6 +147,7 @@ GPU.prototype.write = function(address, data) {
 			break;
 		case 0xFF42: this.scy = data; break;
 		case 0xFF43: this.scx = data; break;
+		case 0xFF44: this.ly = 0; break;
 		case 0xFF45: this.lyc = data; break;
 		default:
 			console.warn('Warning: Invalid GPU write to 0x' + address.toString(16).toUpperCase());
