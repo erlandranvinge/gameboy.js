@@ -33,8 +33,9 @@ MMU.prototype.read = function(address) {
 	return this.memory[address];
 };
 
-MMU.prototype.write = function(address, data) {
+var output = '';
 
+MMU.prototype.write = function(address, data) {
 	if (address >= 0xE000 && address <= 0xFE00)
 		address -= 0x2000; // Memory repeat
 
@@ -60,7 +61,7 @@ MMU.prototype.write = function(address, data) {
 	}
 
 	if (address == 0xFF01) {
-		console.warn('Failed instruction: ' + hex(data, 8));
+		console.warn('BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
 	}
 
 	if (address == 0xFF46) {

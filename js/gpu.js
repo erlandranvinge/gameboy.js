@@ -13,6 +13,7 @@ var Display = function(gpu, canvasId) {
 Display.prototype.scanline = function() {
 
 	var y = this.gpu.ly;
+	var base = this.gpu.control & 0x40 ? 0x8000 : 0x8800;
 	var destination = this.buffer.data;
 	var palette = [255, 200, 128, 40];
 	for (var x = 0; x < 160; x++) {
@@ -22,7 +23,7 @@ Display.prototype.scanline = function() {
 		var bit = x - tileX;
 		var line = y - tileY;
 
-		var address = 0x8000 + tileY * 512 + tileX * 16;
+		var address = base + tileY * 512 + tileX * 16;
 		var low = this.gpu.vram[address + line * 2];
 		var hi = this.gpu.vram[address + line * 2 + 1];
 		var mask = 1 << (7 - bit);

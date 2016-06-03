@@ -31,33 +31,45 @@ var CPU = function(mmu) {
 	this.ie = 0x0;
 	this.if = 0x0;
 	this.halt = false;
-
-	this.opCodes = new OpCodes(this);
 };
 
 CPU.prototype.register = function(name, value) {
+	var self = this;
 	this[name[0]] = function(value) {
-		if (value === undefined) return (this[name] >>> 8) & 0xFF;
-		this[name] = ((value & 0xFF) << 8) | (this[name] & 0xFF);
+		if (value === undefined) return (self[name] >>> 8) & 0xFF;
+		self[name] = ((value & 0xFF) << 8) | (self[name] & 0xFF);
 	};
 	this[name[1]] = function(value) {
-		if (value === undefined) return this[name] & 0xFF;
-		this[name] = (value & 0xFF) | (this[name] & 0xFF00);
+		if (value === undefined) return self[name] & 0xFF;
+		self[name] = (value & 0xFF) | (self[name] & 0xFF00);
 	};
 	return value;
 };
 
 CPU.prototype.flags = function(value, mask) {
-	var result = [
-		mask[0] === '1' || this.af & 0x80 ? 1 : 0,
-		mask[1] === '1' || this.af & 0x40 ? 1 : 0,
-		mask[2] === '1' || this.af & 0x20 ? 1 : 0,
-		mask[3] === '1' || this.af & 0x10 ? 1 : 0];
-	if (mask[0] === 'Z') result[0] = !(value & 0xFF) ? 1 : 0;
-	if (mask[2] === 'H') result[2] = value & 0x10 ? 1 : 0;
-	if (mask[3] === 'C') result[3] = value & 0x100 ? 1 : 0;
-	var nibble = result[0] << 7 | result[1] << 6 | result[2] << 5 | result[3] << 4;
-	this.af = (this.af & 0xFF0F) | nibble;
+
+	var af = this.af;
+
+	switch(mask[0]) {
+		case '0': af &= ~0x80; break;
+		case '1': af |= 0x80; break;
+		case 'Z': if (!(value & 0xFF)) af |= 0x80; else af &= ~0x80; break;
+	}
+	switch(mask[1]) {
+		case '0': af &= ~0x40; break;
+		case '1': af |= 0x40; break;
+	}
+	switch(mask[2]) {
+		case '0': af &= ~0x20; break;
+		case '1': af |= 0x20; break;
+		case 'H': if (value & 0x10 || value & 0x100) af |= 0x20; else af &= ~0x20; break;
+	}
+	switch(mask[3]) {
+		case '0': af &= ~0x10; break;
+		case '1': af |= 0x10; break;
+		case 'C': if (value & 0x100) af |= 0x10; else af &= ~0x10; break;
+	}
+	this.af = af;
 };
 
 CPU.prototype.jump = function(address) {
@@ -78,8 +90,6 @@ CPU.prototype.interrupt = function(address) {
 	}
 };
 
-
-
 CPU.prototype.step = function(dt) {
 
 	if (this.halt) {
@@ -87,35 +97,35 @@ CPU.prototype.step = function(dt) {
 	}
 
 	var op = this.mmu.read(this.pc);
+	var ops = OpCodes;
 	var cycles = op === 0xCB ? 8 : this.opCodeCycles[op];
 
 	var mmu = this.mmu;
 	var a = 0, b = 0, r = 0, d = 0, c = 0, hl = 0, sp = 0, jmp = false;
 	switch (op) {
 		// 8-bit arithmetic.
-		case 0x05: OpCodes.dec(this, this.b); break; // DEC B
-		case 0x0D: OpCodes.dec(this, this.c); break; // DEC C
-		case 0x15: OpCodes.dec(this, this.d); break; // DEC D
-		case 0x1D: OpCodes.dec(this, this.e); break; // DEC E
-		case 0x25: OpCodes.dec(this, this.h); break; // DEC H
-		case 0x2D: OpCodes.dec(this, this.l); break; // DEC L
-		case 0x35: OpCodes.dec(this, this.hla); break; // DEC (HL)
-		case 0x3D: OpCodes.dec(this, this.a); break; // DEC A
+		case 0x05: ops.dec(this, this.b); break; // DEC B
+		case 0x0D: ops.dec(this, this.c); break; // DEC C
+		case 0x15: ops.dec(this, this.d); break; // DEC D
+		case 0x1D: ops.dec(this, this.e); break; // DEC E
+		case 0x25: ops.dec(this, this.h); break; // DEC H
+		case 0x2D: ops.dec(this, this.l); break; // DEC L
+		case 0x35: ops.dec(this, this.hla); break; // DEC (HL)
+		case 0x3D: ops.dec(this, this.a); break; // DEC A
 
-		case 0x04: OpCodes.inc(this, this.b); break; // INC B
-		case 0x0C: OpCodes.inc(this, this.c); break; // INC C
-		case 0x14: OpCodes.inc(this, this.d); break; // INC D
-		case 0x1C: OpCodes.inc(this, this.e); break; // INC E
-		case 0x24: OpCodes.inc(this, this.h); break; // INC H
-		case 0x2C: OpCodes.inc(this, this.l); break; // INC L
-		case 0x34: OpCodes.inc(this, this.hla); break; // INC (HL)
-		case 0x3C: OpCodes.inc(this, this.a); break; // INC A
-
+		case 0x04: ops.inc(this, this.b); break; // INC B
+		case 0x0C: ops.inc(this, this.c); break; // INC C
+		case 0x14: ops.inc(this, this.d); break; // INC D
+		case 0x1C: ops.inc(this, this.e); break; // INC E
+		case 0x24: ops.inc(this, this.h); break; // INC H
+		case 0x2C: ops.inc(this, this.l); break; // INC L
+		case 0x34: ops.inc(this, this.hla); break; // INC (HL)
+		case 0x3C: ops.inc(this, this.a); break; // INC A
 
 		// Unordered 8-bit arithmetic, please fix.
 		case 0xA9: a = this.a() ^ this.c(); this.a(a); this.flags(a, 'Z000'); break; // XOR C
-		case 0xAE: hl = mmu.read(this.hl); hl = hl ^ hl; this.flags(hl, 'Z000'); mmu.write(this.hl, hl); break; // XOR (HL)
-		case 0xAF: this.af = 0x80; break; // XOR A, A
+		case 0xAE: a = this.a() ^ this.hla(); this.a(a); this.flags(a, 'Z000'); break; // XOR (HL)
+		case 0xAF: this.af = 0x80; break; // XOR A, A ????
 
 
 		case 0xA1: r = this.a() & this.c(); this.a(r); this.flags(r, 'Z010'); break; // AND C
@@ -125,12 +135,23 @@ CPU.prototype.step = function(dt) {
 
 		case 0xB0: a = this.a() | this.b(); this.a(a); this.flags(a, 'Z000'); break; // OR B
 		case 0xB1: a = this.a() | this.c(); this.a(a); this.flags(a, 'Z000'); break; // OR C
+		case 0xB6: a = this.a() | this.hla(); this.a(a); this.flags(a, 'Z000'); break; // OR (HL)
 		case 0xB7: a = this.a() | this.a(); this.a(a); this.flags(a, 'Z000'); break; // OR A
 		case 0x90: a = this.a() - this.b(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB B
 		case 0x95: a = this.a() - this.l(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB L
 		case 0xD6: a = this.a() - mmu.read(this.pc + 1); this.flags(a, 'Z1HC'); this.a(a); break; // SUB d8
-		case 0x0F: this.opCodes.rrc(this, this.a); break; // RRCA
-		case 0x1F: this.opCodes.rr(this, this.a); break; // RRA
+		case 0x0F: ops.rrc(this, this.a); break; // RRCA
+		case 0x1F:
+			// a =
+			a = this.a();
+			c = a & 0x1;
+			a >>>= 1;
+			a |= this.f.c() << 7;
+			this.flags(0, '000'+c);
+			this.a(a);
+			//ops.rr(this, this.a);
+
+			break; // RRA
 		case 0x2F: a = ~this.a(); this.a(a); this.flags(a, '-NH-'); break; // CPL (complement A)
 
 
@@ -267,7 +288,9 @@ CPU.prototype.step = function(dt) {
 		case 0x28: if (this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR C,r8
 		case 0x38: if (this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR C,r8
 		case 0x20: if (!this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR NZ,r8
-		case 0x30: if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
+		case 0x30:
+			console.warn('BROKEN JUMP @ ' + hex(this.pc) + '?');
+			if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
 		case 0xC3: this.pc = mmu.readWord(this.pc + 1); jmp = true; break; // JMP a16
 		case 0xCA: if (this.f.z()) { this.pc = mmu.readWord(this.pc + 1); jmp = true; } break; // JP Z, a16
 		case 0xE9: this.pc = this.hl; break; // JP (HL)
@@ -287,6 +310,7 @@ CPU.prototype.step = function(dt) {
 		case 0xC0: if (!this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; } break;// RET NZ
 		case 0xC8: if (this.f.z()) { this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; } break; // RET Z
 		case 0xC9: this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; break; // RET
+		case 0xD0: if (!this.f.c()) { this.pc = mmu.readWord(this.sp); this.sp += 2; jmp = true; } break; // RET NC
 		case 0xD9: this.pc = mmu.readWord(this.sp); this.sp += 2; this.ime = true; jmp = true; break; // RETI
 
 		// Pops and pushes.
@@ -306,6 +330,7 @@ CPU.prototype.step = function(dt) {
 		case 0x3F: this.af ^= 0x10; break; // CCF
 		case 0x0: break; // NOP
 		case 0xE8: sp = this.sp + mmu.read(this.pc + 1); this.flags(sp, '00HC'); this.sp = sp; break; // ADD SP,r8
+		case 0xEE: a = this.a() ^ mmu.read(this.pc + 1); this.flags(a, 'Z000'); this.a(a); break; // XOR ED
 		case 0xF3: this.ime = false; break; // DI
 		case 0xFB: this.ime = true; break; // EI
 		case 0xF8: hl = this.sp + mmu.read(this.pc + 1); this.flags(hl, '00HC'); this.hl = hl; break; // LD HL,SP+r8
@@ -315,12 +340,7 @@ CPU.prototype.step = function(dt) {
 		case 0xEF: mmu.writeWord(this.sp - 2, this.pc); this.pc = 0x28; break; // RST 28H
 		case 0xFF: mmu.writeWord(this.sp - 2, this.pc); this.pc = 0x38; break; // RST 38H
 		case 0x76: console.log('HALT'); this.halt = true; break;
-
-		case 0xCB: // CB OP
-			var cbOp = this.opCodes.cbOpCodes[mmu.read(this.pc + 1)];
-			cbOp.operator(this, cbOp.operand, cbOp.bit);
-			break;
-
+		case 0xCB: OpCodes.cb(this, mmu.read(this.pc + 1)); break; // CB OP
 
 		// CB OpCodes. MOVE!!! ---------------------------------
 		case 0xCB09:
@@ -377,7 +397,7 @@ CPU.prototype.startRom = function() {
 	this.de = 0x00D8;
 	this.hl = 0x014D;
 	this.sp = 0xFFFE;
-	this.pc = 0x100;
+	this.pc = 0x0100;
 	this.mmu.booting = false;
 };
 

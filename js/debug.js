@@ -21,6 +21,7 @@ var Debugger = function(cpu, mmu, gpu) {
 	this.cpu = cpu;
 	this.mmu = mmu;
 	this.gpu = gpu;
+	this.history = [];
 };
 
 Debugger.prototype.regs = function(verbose) {
@@ -99,8 +100,21 @@ Debugger.prototype.dump = function(address, length) {
 	console.log(result);
 };
 
+Debugger.prototype.trace = function() {
+	this.history.push(this.deasm() + ' ' + this.regs());
+	if (this.history.length > 50)
+		this.history.slice();
+};
+
+Debugger.prototype.recent = function(count) {
+	count = count || 15;
+	for (var i = this.history.length - count; i < this.history.length; i++) {
+		console.log(this.history[i]);
+	}
+};
 
 Debugger.prototype.step = function() {
+
 	document.getElementById('af').innerHTML = hex(cpu.af);
 	document.getElementById('bc').innerHTML = hex(cpu.bc);
 	document.getElementById('de').innerHTML = hex(cpu.de);
@@ -126,12 +140,14 @@ Debugger.prototype.step = function() {
 };
 
 Debugger.prototype.drawTiles = function(canvasId) {
+
+	var base = this.gpu.control & 0x40 ? 0x8000 : 0x8800;
 	var canvas = document.getElementById(canvasId);
 	var ctx = canvas.getContext('2d');
 	var palette = [210, 160, 128, 40];
 	for (var tileY = 0; tileY < 16; tileY++) {
 		for (var tileX = 0; tileX < 16; tileX++) {
-			var address = 0x8000 + tileY * 512 + tileX * 16;
+			var address = base + tileY * 512 + tileX * 16;
 			var tile = ctx.createImageData(8, 8);
 			for (var line = 0; line < 8; line++) {
 				var low = this.gpu.vram[address + line * 2];
