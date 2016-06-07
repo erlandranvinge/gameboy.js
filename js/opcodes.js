@@ -4,12 +4,17 @@ var OpCodes = {};
 
 OpCodes.inc = function(cpu, r) {
 	var tmp = r();
-	var half = tmp & 0xF ? 1 : 0;
-	cpu.flags(tmp + 1, 'Z0' + half + '-');
+	cpu.flags(tmp + 1, 'Z0H-');
 	r(tmp + 1);
 };
 
-OpCodes.dec = function(cpu, r) { var tmp = r() - 1; cpu.flags(tmp, 'Z1H-'); r(tmp); };
+OpCodes.dec = function(cpu, r) {
+	var tmp = r();
+	var h = tmp & 0xF < 1;
+	tmp -= 1;
+	cpu.flags(tmp, 'Z1' + h +'-');
+	r(tmp);
+};
 
 OpCodes.rlc = function(cpu, r) { throw 'RLC not implemented yet'; };
 OpCodes.rrc = function(cpu, r) {

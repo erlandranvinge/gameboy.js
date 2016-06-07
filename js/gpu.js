@@ -11,38 +11,41 @@ var Display = function(gpu, canvasId) {
 };
 
 Display.prototype.scanline = function() {
-
+	var control = this.gpu.control;
 	var y = this.gpu.ly;
-	var base = this.gpu.control & 0x40 ? 0x8000 : 0x8800;
-	var destination = this.buffer.data;
-	var palette = [255, 200, 128, 40];
+	var screen = this.buffer.data;
+
 	for (var x = 0; x < 160; x++) {
+		var tileX = x >> 3;
+		var tileY = y >> 3;
 
-		var tileX = x / 8 | 0;
-		var tileY = y / 8 | 0;
-		var bit = x - tileX;
-		var line = y - tileY;
+		var index = this.gpu.vram[0x9800 + 32 * tileY + tileX];
+		var line = y - tileY * 8;
+		var bit = x - tileX * 8;
 
-		var address = base + tileY * 512 + tileX * 16;
+		var address = 0x8000 + index * 16;//+ tileY * 512 + tileX * 16;
+		var palette = [255, 200, 128, 40];
+
 		var low = this.gpu.vram[address + line * 2];
 		var hi = this.gpu.vram[address + line * 2 + 1];
+
+		var px = tileX * 8 + bit;
+		var py = tileY * 8 + line;
 		var mask = 1 << (7 - bit);
 		var index = (low & mask ? 1 : 0) + (hi & mask ? 2 : 0);
-		var color = palette[index];
+		var color = palette[index]; //index == 3 ? 0 : 255;
 
-
-
-		var dAddress = (y * 160 + x) * 4;
-		destination[dAddress] = color;
-		destination[dAddress + 1] = color;
-		destination[dAddress + 2] = color;
-		destination[dAddress + 3] = 0xFF;
+		var da = (y * 160 + x) * 4;
+		screen[da] = color;
+		screen[da + 1] = color;
+		screen[da + 2] = color;
+		screen[da + 3] = 0xFF;
 	}
 };
 
 Display.prototype.blit = function() {
 	this.context.putImageData(this.buffer, 0, 0);
-	console.log('BLIT!');
+	//console.log('BLIT!');
 };
 
 var GPUMode = { hBlank: 0, vBlank: 1, oamRead: 2, transfer: 3 };
@@ -58,6 +61,9 @@ var GPU = function(canvasId) {
 	this.stat = 0x85;
 	this.scy = 0;
 	this.scx = 0;
+
+	for (var i = 0; i < 0xFFFF; i++)
+		this.vram[i] = 0x0;
 };
 
 GPU.prototype.cnt = function() {
@@ -139,11 +145,11 @@ GPU.prototype.write = function(address, data) {
 
 	switch(address) {
 		case 0xFF40:
-			console.log('LCD Control:', bits(data, 8));
+			//console.log('LCD Control:', bits(data, 8));
 			this.control = data;
 			break;
 		case 0xFF41:
-			console.log('LCD STAT: ', bits(data, 8));
+			//console.log('LCD STAT: ', bits(data, 8));
 			this.stat = (this.stat & 0x8F) | (data & 0x70);
 			break;
 		case 0xFF42: this.scy = data; break;

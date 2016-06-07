@@ -8,14 +8,21 @@ var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
 io.bind();
 
-mmu.setCartridge('roms/flow.gb');
+mmu.setCartridge('roms/loads.gb');
 cpu.startRom();
 
+totalCycles = 0;
+trace = false;
 function tick() {
 	var dt = 0.000001;
 	var cycles = cpu.step(dt);
+	totalCycles += cycles;
 	gpu.step(cycles);
-	dbg.step();
+
+	if (trace) {
+		dbg.step();
+		dbg.trace();
+	}
 }
 
 dbg.step();
@@ -24,13 +31,15 @@ console.log(dbg.deasm());
 var exit = false;
 function runTo(address) {
 	tick();
-	dbg.trace();
 
 	for (var i = 0; i < 10000; i++) {
-		if (cpu.pc === address)
+		if (cpu.pc === address) {
+			dbg.step();
 			return;
+		}
 		tick();
-		//dbg.trace();
+		if (exit) break;
+
 	}
 	if (exit) {
 		console.log('Bailed out!');

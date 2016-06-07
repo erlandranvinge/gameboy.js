@@ -60,8 +60,9 @@ MMU.prototype.write = function(address, data) {
 		return;
 	}
 
+	/*
 	if (address == 0xFF01) {
-		console.warn('BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
+		throw('BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
 	}
 
 	if (address == 0xFF46) {
@@ -73,7 +74,7 @@ MMU.prototype.write = function(address, data) {
 		for (var offset = 0; offset < 0xA0; offset++)
 			this.memory[0xFE00 + offset] = this.memory[source + offset]
 		return;
-	}
+	}*/
 
 	this.memory[address] = data;
 };

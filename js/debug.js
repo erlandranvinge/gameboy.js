@@ -102,7 +102,7 @@ Debugger.prototype.dump = function(address, length) {
 
 Debugger.prototype.trace = function() {
 	this.history.push(this.deasm() + ' ' + this.regs());
-	if (this.history.length > 50)
+	if (this.history.length > 1000)
 		this.history.slice();
 };
 
@@ -141,13 +141,13 @@ Debugger.prototype.step = function() {
 
 Debugger.prototype.drawTiles = function(canvasId) {
 
-	var base = this.gpu.control & 0x40 ? 0x8000 : 0x8800;
+	var base = this.gpu.control & 0x40 ? 0x8800 : 0x8000;
 	var canvas = document.getElementById(canvasId);
 	var ctx = canvas.getContext('2d');
 	var palette = [210, 160, 128, 40];
 	for (var tileY = 0; tileY < 16; tileY++) {
 		for (var tileX = 0; tileX < 16; tileX++) {
-			var address = base + tileY * 512 + tileX * 16;
+			var address = base + tileY * 256 + tileX * 16;
 			var tile = ctx.createImageData(8, 8);
 			for (var line = 0; line < 8; line++) {
 				var low = this.gpu.vram[address + line * 2];
