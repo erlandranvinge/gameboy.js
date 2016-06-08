@@ -28,15 +28,20 @@ OpCodes.rrc = function(cpu, r) {
 OpCodes.rl = function(cpu, r) { throw 'RL not implemented yet'; };
 OpCodes.rr = function(cpu, r) {
 	var tmp = r();
-	var c = tmp & 0x1;
+	var b0 = tmp & 0x1;
 	tmp = tmp >>> 1 | (cpu.f.c() ? 0x80 : 0);
-	cpu.flags(tmp, 'Z00' + c);
+	cpu.flags(tmp, 'Z00' + b0);
 	r(tmp);
 };
 
 OpCodes.sla = function(cpu, r) { throw 'SLA not implemented yet'; };
 OpCodes.sra = function(cpu, r) { throw 'SRA not implemented yet'; };
-OpCodes.swap = function(cpu, r) { throw 'SWAP not implemented yet'; };
+OpCodes.swap = function(cpu, r) {
+	var tmp = r();
+	var swap = (tmp & 0xF << 4) | (tmp & 0xF0 >>> 4);
+	cpu.flags(swap, 'Z000');
+	r(swap);
+};
 OpCodes.srl = function(cpu, r) {
 	var tmp = r();
 	var c = tmp & 0x1;

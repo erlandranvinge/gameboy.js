@@ -1,4 +1,7 @@
 
+// Testroms: https://github.com/retrio/gb-test-roms
+
+
 var gpu = new GPU('canvas');
 var io = new Io();
 var spu = new SPU();

@@ -92,9 +92,10 @@ CPU.prototype.interrupt = function(address) {
 
 CPU.prototype.step = function(dt) {
 
-	if (this.halt) {
-		return 4;
-	}
+	if (this.halt) return 4;
+
+	if (this.pc >= 0x8000 && this.pc < 0xA000)
+		throw 'Trying to execute from video RAM: ' + hex(this.pc);
 
 	var op = this.mmu.read(this.pc);
 	var ops = OpCodes;
@@ -124,6 +125,7 @@ CPU.prototype.step = function(dt) {
 
 		// Unordered 8-bit arithmetic, please fix.
 		case 0xA9: a = this.a() ^ this.c(); this.a(a); this.flags(a, 'Z000'); break; // XOR C
+		case 0xAD: a = this.a() ^ this.l(); this.a(a); this.flags(a, 'Z000'); break; // XOR L
 		case 0xAE: a = this.a() ^ this.hla(); this.a(a); this.flags(a, 'Z000'); break; // XOR (HL)
 		case 0xAF: this.af = 0x80; break; // XOR A, A ????
 
@@ -142,15 +144,8 @@ CPU.prototype.step = function(dt) {
 		case 0xD6: a = this.a() - mmu.read(this.pc + 1); this.flags(a, 'Z1HC'); this.a(a); break; // SUB d8
 		case 0x0F: ops.rrc(this, this.a); break; // RRCA
 		case 0x1F:
-			// a =
-			a = this.a();
-			c = a & 0x1;
-			a >>>= 1;
-			a |= this.f.c() << 7;
-			this.flags(0, '000'+c);
-			this.a(a);
-			//ops.rr(this, this.a);
-
+			ops.rr(this, this.a);
+			this.af &= 0xFF10;
 			break; // RRA
 		case 0x2F: a = ~this.a(); this.a(a); this.flags(a, '-NH-'); break; // CPL (complement A)
 		case 0xFE:
@@ -295,7 +290,7 @@ CPU.prototype.step = function(dt) {
 		case 0x30: if (!this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR NC,r8
 		case 0xC3: this.pc = mmu.readWord(this.pc + 1); jmp = true; break; // JMP a16
 		case 0xCA: if (this.f.z()) { this.pc = mmu.readWord(this.pc + 1); jmp = true; } break; // JP Z, a16
-		case 0xE9: this.pc = this.hl; break; // JP (HL)
+		case 0xE9: this.pc = this.hl; jmp = true; break; // JP (HL)
 		case 0xC2: if (!this.f.z()) { this.pc = mmu.readWord(this.pc + 1); jmp = true; } break; // JP NZ,a16
 		case 0xC4: // CALL NZ, a16
 			if (!this.f.z()) {
