@@ -16,7 +16,10 @@ OpCodes.dec = function(cpu, r) {
 	r(tmp);
 };
 
-OpCodes.rlc = function(cpu, r) { throw 'RLC not implemented yet'; };
+OpCodes.rlc = function(cpu, r) {
+	throw 'RLC not implemented yet';
+};
+
 OpCodes.rrc = function(cpu, r) {
 	var tmp = r();
 	var b0 = tmp & 0x1;

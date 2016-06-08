@@ -40,7 +40,7 @@ MMU.prototype.write = function(address, data) {
 		address -= 0x2000; // Memory repeat
 
 	if (address < 0x8000) {
-		throw 'Invalid write to ROM memory @ 0x' + address.toString(16).toUpperCase();
+		console.warn('Invalid write to ROM memory @ 0x' + address.toString(16).toUpperCase());
 	}
 
 	if (address >= 0xFF10 && address <= 0xFF3F) // Sound unit.
@@ -59,22 +59,9 @@ MMU.prototype.write = function(address, data) {
 		return;
 	}
 
-	/*
 	if (address == 0xFF01) {
-		throw('BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
+		//console.warn('POTENTIALLY BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
 	}
-
-	if (address == 0xFF46) {
-		this.memory[address] = data;
-		var source = address << 8;
-		if (source < 0x8000 || source >= 0xE000)
-			return;
-
-		for (var offset = 0; offset < 0xA0; offset++)
-			this.memory[0xFE00 + offset] = this.memory[source + offset]
-		return;
-	}*/
-
 	this.memory[address] = data;
 };
 
