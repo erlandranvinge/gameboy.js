@@ -150,6 +150,10 @@ CPU.prototype.step = function(dt) {
 
 		case 0xB0: a = this.a() | this.b(); this.a(a); this.flags(a, 'Z000'); break; // OR B
 		case 0xB1: a = this.a() | this.c(); this.a(a); this.flags(a, 'Z000'); break; // OR C
+		case 0xB2: a = this.a() | this.d(); this.a(a); this.flags(a, 'Z000'); break; // OR D
+		case 0xB3: a = this.a() | this.e(); this.a(a); this.flags(a, 'Z000'); break; // OR E
+		case 0xB4: a = this.a() | this.h(); this.a(a); this.flags(a, 'Z000'); break; // OR H
+		case 0xB5: a = this.a() | this.l(); this.a(a); this.flags(a, 'Z000'); break; // OR L
 		case 0xB6: a = this.a() | this.hla(); this.a(a); this.flags(a, 'Z000'); break; // OR (HL)
 		case 0xB7: a = this.a() | this.a(); this.a(a); this.flags(a, 'Z000'); break; // OR A
 		case 0xF6: a = this.a() | mmu.read(this.pc + 1); this.a(a); this.flags(a, 'Z000'); break; // OR d8
@@ -200,7 +204,7 @@ CPU.prototype.step = function(dt) {
 
 		case 0xCE: a = this.a() + mmu.read(this.pc + 1) + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d8
 		case 0x8A: a = this.a() + this.d() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d
-
+		case 0x8E: a = this.a() + this.hla() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A, (HL)
 		case 0x9C: a = this.a() - this.h() - this.f.c(); this.flags(a, 'Z1HC'); this.a(a); break; // SBC A,H
 
 		// 8-bit loads.
@@ -291,6 +295,7 @@ CPU.prototype.step = function(dt) {
 
 		// 16-bit loads.
 		case 0x01: this.bc = mmu.readWord(this.pc + 1); break; // LD BC,d16
+		case 0x02: mmu.writeWord(this.bc, this.a()); break; // LD (BC), A
 		case 0x08: mmu.writeWord(mmu.readWord(this.pc + 1), this.sp); break; // LD (a16), SP
 		case 0x11: this.de = mmu.readWord(this.pc + 1); break; // LD DE,d16
 		case 0x21: this.hl = mmu.readWord(this.pc + 1); break; // LD HL,d16

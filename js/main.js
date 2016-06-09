@@ -11,7 +11,7 @@ var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
 io.bind();
 
-mmu.setCartridge('roms/golf.gb');
+mmu.setCartridge('roms/loads.gb');
 cpu.startRom();
 
 totalCycles = 0;
@@ -23,7 +23,7 @@ function tick() {
 	gpu.step(cycles);
 
 	if (trace) {
-		dbg.step();
+		//dbg.step();
 		dbg.trace();
 	}
 }
