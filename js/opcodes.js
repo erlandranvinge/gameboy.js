@@ -76,6 +76,11 @@ OpCodes.cb = function(cpu, opCode) {
 
 	var name = 'UNKNOWN';
 	var operand = regs[opCode & 0x7];
+
+	if (opCode >= 0x40 && opCode <= 0x7F) { /* BIT */ }
+	if (opCode >= 0x80 && opCode <= 0xB9) { /* RES */ }
+	if (opCode >= 0xC0 && opCode <= 0xFF) { /* SET */ }
+
 	switch(opCode & 0xF8) {
 		case 0x00: OpCodes.rlc(cpu, operand); break;
 		case 0x08: OpCodes.rrc(cpu, operand); break;
@@ -85,7 +90,8 @@ OpCodes.cb = function(cpu, opCode) {
 		case 0x28: OpCodes.sra(cpu, operand); break;
 		case 0x30: OpCodes.swap(cpu, operand); break;
 		case 0x38: OpCodes.srl(cpu, operand); break;
-		default: throw 'Unknown cb op found: ' + opCode.toString(16);
+		default:
+			throw 'Unknown cb op found: ' + opCode.toString(16);
 	}
 
 	/*
