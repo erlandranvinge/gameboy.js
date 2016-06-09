@@ -3,9 +3,10 @@
 var OpCodes = {};
 
 OpCodes.inc = function(cpu, r) {
-	var tmp = r();
-	cpu.flags(tmp + 1, 'Z0H-');
-	r(tmp + 1);
+	var tmp = r() + 1;
+	var h = !(tmp & 0xF);
+	cpu.flags(tmp, 'Z0' + h + '-');
+	r(tmp);
 };
 
 OpCodes.dec = function(cpu, r) {
@@ -14,6 +15,13 @@ OpCodes.dec = function(cpu, r) {
 	tmp -= 1;
 	cpu.flags(tmp, 'Z1' + h +'-');
 	r(tmp);
+};
+
+OpCodes.cp = function(cpu, d) {
+	var a = cpu.a();
+	var h = (a & 0xF) < (d & 0xF) ? 1 : 0;
+	var c = a < d ? 1 : 0;
+	cpu.flags(a - d, 'Z1' + h + c);
 };
 
 OpCodes.rlc = function(cpu, r) {
