@@ -93,7 +93,7 @@ CPU.prototype.interrupt = function(address) {
 	
 	var ie = this.mmu.read(0xFFFF);
 	if (ie & 0x1) {
-		console.log('VBLANK @ ', hex(this.pc));
+		//console.log('VBLANK @ ', hex(this.pc));
 		this.pc = address;
 		this.halt = false;
 	}
@@ -190,12 +190,18 @@ CPU.prototype.step = function(dt) {
 		case 0x80: a = this.a() + this.b(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, B
 		case 0x81: a = this.a() + this.c(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, C
 		case 0x82: a = this.a() + this.d(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, D
+		case 0x83: a = this.a() + this.e(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, E
+		case 0x84: a = this.a() + this.h(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, H
 		case 0x85: a = this.a() + this.l(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, L
 		case 0x86: a = this.a() + this.hla(); this.flags(a, 'Z0HC'); this.a(a); break; // ADD A, (HL)
 		case 0x87: a = this.a() * 2; this.flags(a, 'Z0HC'); this.a(a); break; // ADD A,A
+		
 		case 0xC6: a = this.a() + mmu.read(this.pc + 1); this.flags(a, 'Z0HC'); this.a(a); break; // ADD a, d8
-		case 0xCE: a = this.a() + mmu.read(this.pc + 1) + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d8
 
+		case 0xCE: a = this.a() + mmu.read(this.pc + 1) + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d8
+		case 0x8A: a = this.a() + this.d() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d
+
+		case 0x9C: a = this.a() - (this.h() + this.f.c()); this.flags(a, 'Z1HC'); this.a(a); break; // SBC A,H
 
 		// 8-bit loads.
 		case 0x06: this.b(mmu.read(this.pc + 1)); break; // LD B,d8
@@ -351,6 +357,19 @@ CPU.prototype.step = function(dt) {
 
 		// Misc.
 		case 0x17: a = this.a() << 1 | this.f.c(); this.flags(a, '000C'); this.a(a); break; // RLA
+		case 0x27:
+			/*
+			 When this instruction is executed, the A register is BCD corrected using the contents of the flags.
+			 The exact process is the following: if the least significant four bits of A contain a non-BCD digit
+			 (i. e. it is greater than 9) or the H flag is set, then $06 is added to the register.
+			 Then the four most significant bits are checked.
+			 If this more significant digit also happens to be greater than 9 or the C flag is set, then $60 is added.
+			 */
+			a = this.a();
+			if (a & 0x0F || this.f.h()) a += 0x06;
+			if (a & 0xF0 || this.f.c()) a += 0x60;
+			this.flags(a, 'Z-0C');
+			break;
 		case 0x37: this.flags(0, '-001'); break; // SCF (set carry flag).
 		case 0x3F: this.af ^= 0x10; break; // CCF
 		case 0x0: break; // NOP
