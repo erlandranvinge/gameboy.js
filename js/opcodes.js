@@ -17,6 +17,27 @@ OpCodes.dec = function(cpu, r) {
 	r(tmp);
 };
 
+OpCodes.add = function(cpu, value) {
+	console.log('ADD =-~-----------------------------');
+
+	var a = cpu.a();
+	var msg = a + ' + ' + value;
+	a += value;
+	var c = cpu.f.c();
+	var h = cpu.f.h();
+
+	if (a & 0x100) {
+		c = c ? 0 : 1;
+	}
+	if (a & 0x10) {
+		h = h ? 0 : 1;
+	}
+	cpu.flags(a, 'Z0' + h + c);
+	console.log('FLAGS: ' + 'Z0' + h + c);
+	cpu.a(a);
+	console.log(msg + ' = ' + a + ':    ' + dbg.regs());
+};
+
 OpCodes.cp = function(cpu, d) {
 	var a = cpu.a();
 	var h = (a & 0xF) < (d & 0xF) ? 1 : 0;

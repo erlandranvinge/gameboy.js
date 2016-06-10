@@ -26,7 +26,6 @@ var CPU = function(mmu) {
 	this.f.n = function() { return self.af & 0x40 ? 1 : 0; };
 	this.f.h = function() { return self.af & 0x20 ? 1 : 0; };
 	this.f.c = function() { return self.af & 0x10 ? 1 : 0; };
-
 	this.ime = false;
 	this.ie = 0x0;
 	this.if = 0x0;
@@ -192,6 +191,7 @@ CPU.prototype.step = function(dt) {
 					var failedOp = mmu.read(0xDEF8);
 					console.log(hex(failedOp) + '    ' + Debugger.opCodeNames[failedOp]);
 					console.log('----------------------------------------------');
+					throw 'bail!';
 				}
 			}
 			h = (a & 0xF) < (d & 0xF) ? 1 : 0;
@@ -207,7 +207,7 @@ CPU.prototype.step = function(dt) {
 		case 0xBE: ops.cp(this, this.hla()); break; // CP (HL)
 		case 0xBF: this.flags(0, '1100'); break; // CP A
 
-		case 0x80: a = this.a() + this.b(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, B
+		case 0x80: ops.add(cpu, cpu.b()); break; // ADD A, B
 		case 0x81: a = this.a() + this.c(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, C
 		case 0x82: a = this.a() + this.d(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, D
 		case 0x83: a = this.a() + this.e(); this.a(a); this.flags(a, 'Z0HC'); break; // ADD A, E
