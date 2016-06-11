@@ -11,7 +11,7 @@ var dbg = new Debugger(cpu, mmu, gpu);
 gpu.cpu = cpu; // for now.
 io.bind();
 
-mmu.setCartridge('roms/oprr.gb');
+mmu.setCartridge('roms/misc.gb');
 cpu.startRom();
 
 totalCycles = 0;

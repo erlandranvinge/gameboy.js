@@ -62,6 +62,9 @@ MMU.prototype.write = function(address, data) {
 	if (address == 0xFF01) {
 		//console.warn('POTENTIALLY BROKEN: ' + hex(data, 8) + '     ' + Debugger.opCodeNames[data]);
 	}
+
+	if (address == 0xFF83)
+		return; //console.log('MEM WRITE');
 	this.memory[address] = data;
 };
 
@@ -70,7 +73,7 @@ MMU.prototype.readWord = function(address) {
 };
 
 MMU.prototype.writeWord = function(address, data) {
-	var hi = data >>> 8;
+	var hi = (data >>> 8) & 0xFF;
 	var low = data & 0xFF;
 	this.write(address, low);
 	this.write(address + 1, hi);

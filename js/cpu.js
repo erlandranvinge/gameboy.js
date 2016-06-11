@@ -309,12 +309,23 @@ CPU.prototype.step = function(dt) {
 		case 0x1A: this.a(mmu.read(this.de)); break; // LD A,(DE)
 
 		case 0xE0: mmu.write(0xFF00 + mmu.read(this.pc + 1), this.a()); break; // LDH (a8),A
-		case 0xF0: this.a(mmu.read(0xFF00 + mmu.read(this.pc + 1))); break; // LDH A,(a8)
+		case 0xF0:
+/*			console.log(dbg.deasm());
+			console.log('before', hex(this.a(), 8));
+			var tmp = 0xFF00 + mmu.read(this.pc + 1);
+			console.log('address: ' + hex(tmp));*/
+			this.a(mmu.read(0xFF00 + mmu.read(this.pc + 1)));
+			//console.log('after', hex(this.a(), 8));
+
+
+			break; // LDH A,(a8)
+
 		case 0xFA: this.a(mmu.read(mmu.readWord(this.pc + 1))); break; // LD A,(a16)
 
 		// 16-bit loads.
 		case 0x01: this.bc = mmu.readWord(this.pc + 1); break; // LD BC,d16
 		case 0x02: mmu.writeWord(this.bc, this.a()); break; // LD (BC), A
+
 		case 0x08: mmu.writeWord(mmu.readWord(this.pc + 1), this.sp); break; // LD (a16), SP
 		case 0x11: this.de = mmu.readWord(this.pc + 1); break; // LD DE,d16
 		case 0x21: this.hl = mmu.readWord(this.pc + 1); break; // LD HL,d16
@@ -386,7 +397,9 @@ CPU.prototype.step = function(dt) {
 		case 0xC1: this.bc = mmu.readWord(this.sp); this.sp += 2; break; // POP BC
 		case 0xD1: this.de = mmu.readWord(this.sp); this.sp += 2; break; // POP DE
 		case 0xE1: this.hl = mmu.readWord(this.sp); this.sp += 2; break; // POP HL
-		case 0xF1: this.af = mmu.readWord(this.sp); this.sp += 2; break; // POP AF
+		case 0xF1:
+			this.af = mmu.readWord(this.sp) & 0xFF0F; this.sp += 2;
+			break; // POP AF
 
 		// Misc.
 		case 0x17: a = this.a() << 1 | this.f.c(); this.flags(a, '000C'); this.a(a); break; // RLA
@@ -409,6 +422,7 @@ CPU.prototype.step = function(dt) {
 		case 0x0: break; // NOP
 		case 0xE8: sp = this.sp + mmu.read(this.pc + 1); this.flags(sp, '00HC'); this.sp = sp; break; // ADD SP,r8
 		case 0xEE: a = this.a() ^ mmu.read(this.pc + 1); this.flags(a, 'Z000'); this.a(a); break; // XOR ED
+		case 0xF2: this.a(this.mmu.read((0xFF00 + this.c()) & 0xFFFF)); break; // LD A, (C)
 		case 0xF3: this.ime = false; break; // DI
 		case 0xFB: this.ime = true; break; // EI
 		case 0xF8: hl = this.sp + mmu.read(this.pc + 1); this.flags(hl, '00HC'); this.hl = hl; break; // LD HL,SP+r8
