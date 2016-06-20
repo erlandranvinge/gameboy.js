@@ -18,10 +18,7 @@ OpCodes.dec = function(cpu, r) {
 };
 
 OpCodes.add = function(cpu, value) {
-	console.log('ADD =-~-----------------------------');
-
 	var a = cpu.a();
-	var msg = a + ' + ' + value;
 	a += value;
 	var c = cpu.f.c();
 	var h = cpu.f.h();
@@ -33,9 +30,7 @@ OpCodes.add = function(cpu, value) {
 		h = h ? 0 : 1;
 	}
 	cpu.flags(a, 'Z0' + h + c);
-	console.log('FLAGS: ' + 'Z0' + h + c);
 	cpu.a(a);
-	console.log(msg + ' = ' + a + ':    ' + dbg.regs());
 };
 
 OpCodes.cp = function(cpu, d) {

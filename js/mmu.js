@@ -40,7 +40,7 @@ MMU.prototype.write = function(address, data) {
 		address -= 0x2000; // Memory repeat
 
 	if (address < 0x8000) {
-		console.warn('Invalid write to ROM memory @ 0x' + address.toString(16).toUpperCase());
+		throw 'Invalid write to ROM memory @ 0x' + address.toString(16).toUpperCase();
 	}
 
 	if (address >= 0xFF10 && address <= 0xFF3F) // Sound unit.

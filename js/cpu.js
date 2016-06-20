@@ -159,6 +159,7 @@ CPU.prototype.step = function(dt) {
 
 		case 0x90: a = this.a() - this.b(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB B
 		case 0x91: a = this.a() - this.c(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB C
+		case 0x92: a = this.a() - this.d(); this.flags(a, 'Z1hC'); this.a(a); break; // SUB D
 		case 0x95: a = this.a() - this.l(); this.flags(a, 'Z1HC'); this.a(a); break; // SUB L
 		case 0xD6: a = this.a() - mmu.read(this.pc + 1); this.flags(a, 'Z1HC'); this.a(a); break; // SUB d8
 
@@ -185,7 +186,7 @@ CPU.prototype.step = function(dt) {
 
 			if (cpu.pc == 0xC2D5 && d == 0) {
 				if (a == 0) {
-					//console.log('CHECKSUM OK!');
+					console.log('CHECKSUM OK!');
 				} else {
 					console.log('WARNING! CHECKSUM FAILED: ' + hex(a));
 					var failedOp = mmu.read(0xDEF8);
@@ -216,10 +217,16 @@ CPU.prototype.step = function(dt) {
 		case 0x86: a = this.a() + this.hla(); this.flags(a, 'Z0HC'); this.a(a); break; // ADD A, (HL)
 		case 0x87: a = this.a() * 2; this.flags(a, 'Z0HC'); this.a(a); break; // ADD A,A
 		
-		case 0xC6: a = this.a() + mmu.read(this.pc + 1); this.flags(a, 'Z0HC'); this.a(a); break; // ADD a, d8
+		case 0xC6:
+			ops.add(this, mmu.read(this.pc + 1));
+			//a = this.a() + mmu.read(this.pc + 1); this.flags(a, 'Z0HC'); this.a(a);
+			break; // ADD a, d8
 
 		case 0xCE: a = this.a() + mmu.read(this.pc + 1) + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d8
+
 		case 0x8A: a = this.a() + this.d() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,d
+		case 0x8B: a = this.a() + this.e() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,e
+		case 0x8C: a = this.a() + this.h() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A,H
 		case 0x8E: a = this.a() + this.hla() + this.f.c(); this.flags(a, 'Z0HC'); this.a(a); break; // ADC A, (HL)
 		case 0x9C: a = this.a() - this.h() - this.f.c(); this.flags(a, 'Z1HC'); this.a(a); break; // SBC A,H
 
@@ -362,7 +369,11 @@ CPU.prototype.step = function(dt) {
 			break; // ADD HL,SP
 
 		// Flow control
-		case 0x18: this.jump(mmu.read(this.pc + 1)); break; // JR r8
+		case 0x18:
+			console.log('JR r8 @ 0x' + hex(this.pc));
+			this.jump(mmu.read(this.pc + 1)); break;
+			// JR r8
+
 		case 0x28: if (this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR C,r8
 		case 0x38: if (this.f.c()) this.jump(mmu.read(this.pc + 1)); break; // JR C,r8
 		case 0x20: if (!this.f.z()) this.jump(mmu.read(this.pc + 1)); break; // JR NZ,r8
