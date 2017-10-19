@@ -2,4 +2,4 @@
 
 An experimental gameboy emulator written in javascript.
 
-![The emulator running the gameboy boot-sequence](/gameboy.js/master/screenshot.png)
+![The emulator running the gameboy boot-sequence](/screenshot.png)
